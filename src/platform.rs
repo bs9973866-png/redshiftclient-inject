@@ -5,6 +5,7 @@ use windows_sys::Win32::{
         Input::KeyboardAndMouse::{GetAsyncKeyState, VK_RSHIFT},
         WindowsAndMessaging::{
             EnumWindows, GetForegroundWindow, GetWindowRect, GetWindowTextW, IsWindowVisible,
+            GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
         },
     },
 };
@@ -17,6 +18,10 @@ pub struct MinecraftWindowInfo {
     pub width: i32,
     pub height: i32,
     pub is_foreground: bool,
+    pub work_left: i32,
+    pub work_top: i32,
+    pub work_right: i32,
+    pub work_bottom: i32,
 }
 
 pub fn start_hotkey_listener(sender: Sender<()>) {
@@ -56,6 +61,21 @@ pub fn find_minecraft_window() -> Option<MinecraftWindowInfo> {
     if unsafe { GetWindowRect(search.found, &mut rect) } == 0 { return None; }
 
     let foreground = unsafe { GetForegroundWindow() };
+    let monitor = unsafe { MonitorFromWindow(search.found, MONITOR_DEFAULTTONEAREST) };
+    let mut monitor_info: MONITORINFO = unsafe { std::mem::zeroed() };
+    monitor_info.cbSize = std::mem::size_of::<MONITORINFO>() as u32;
+    let has_work_area = !monitor.is_null()
+        && unsafe { GetMonitorInfoW(monitor, &mut monitor_info) } != 0;
+    let (work_left, work_top, work_right, work_bottom) = if has_work_area {
+        (
+            monitor_info.rcWork.left,
+            monitor_info.rcWork.top,
+            monitor_info.rcWork.right,
+            monitor_info.rcWork.bottom,
+        )
+    } else {
+        (rect.left, rect.top, rect.right, rect.bottom)
+    };
     Some(MinecraftWindowInfo {
         title: window_title(search.found),
         left: rect.left,
@@ -63,6 +83,10 @@ pub fn find_minecraft_window() -> Option<MinecraftWindowInfo> {
         width: rect.right - rect.left,
         height: rect.bottom - rect.top,
         is_foreground: foreground == search.found,
+        work_left,
+        work_top,
+        work_right,
+        work_bottom,
     })
 }
 
