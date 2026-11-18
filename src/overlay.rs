@@ -18,8 +18,13 @@ struct OverlayProfile {
     show_status_widget: bool,
     fps_position: [f32; 2],
     status_position: [f32; 2],
+    #[serde(default = "default_crosshair_position")]
     crosshair_position: [f32; 2],
+    #[serde(default)]
+    show_crosshair_widget: bool,
 }
+
+fn default_crosshair_position() -> [f32; 2] { [370.0, 285.0] }
 
 impl Default for OverlayProfile {
     fn default() -> Self {
@@ -32,6 +37,7 @@ impl Default for OverlayProfile {
             fps_position: [370.0, 155.0],
             status_position: [370.0, 220.0],
             crosshair_position: [370.0, 285.0],
+            show_crosshair_widget: false,
         }
     }
 }
@@ -101,6 +107,7 @@ impl RedshiftOverlay {
             fps_position: [self.fps_position.x, self.fps_position.y],
             status_position: [self.status_position.x, self.status_position.y],
             crosshair_position: [self.crosshair_position.x, self.crosshair_position.y],
+            show_crosshair_widget: self.show_crosshair_widget,
         }
     }
 
@@ -136,6 +143,7 @@ impl RedshiftOverlay {
         self.fps_position = egui::pos2(profile.fps_position[0], profile.fps_position[1]);
         self.status_position = egui::pos2(profile.status_position[0], profile.status_position[1]);
         self.crosshair_position = egui::pos2(profile.crosshair_position[0], profile.crosshair_position[1]);
+        self.show_crosshair_widget = profile.show_crosshair_widget;
     }
 
     fn poll(&mut self, ctx: &egui::Context) {
