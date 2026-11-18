@@ -12,7 +12,9 @@ pub struct RedshiftOverlay {
     hotkey_rx: Receiver<()>,
     menu_open: bool,
     selected_tab: usize,
-    minecraft_found: bool,
+    minecraft_window: Option<platform::MinecraftWindowInfo>,
+    follow_game_window: bool,
+    last_follow_position: Option<(i32, i32)>,
     opacity: f32,
     accent_glow: bool,
     show_fps_widget: bool,
@@ -22,14 +24,23 @@ pub struct RedshiftOverlay {
 
 impl RedshiftOverlay {
     pub fn new(hotkey_rx: Receiver<()>) -> Self {
-        Self { hotkey_rx, menu_open: true, selected_tab: 0, minecraft_found: false,
+        Self { hotkey_rx, menu_open: true, selected_tab: 0, minecraft_window: None, follow_game_window: true, last_follow_position: None,
             opacity: 0.94, accent_glow: true, show_fps_widget: false,
             show_crosshair_widget: false, show_status_widget: true }
     }
 
     fn poll(&mut self, ctx: &egui::Context) {
         while self.hotkey_rx.try_recv().is_ok() { self.menu_open = !self.menu_open; }
-        self.minecraft_found = platform::find_minecraft_window().is_some();
+        self.minecraft_window = platform::find_minecraft_window();
+        if self.follow_game_window {
+            if let Some(game) = self.minecraft_window.as_ref().filter(|game| game.is_foreground && game.width > 0 && game.height > 0) {
+                let target = (game.left + 24, game.top + 24);
+                if self.last_follow_position != Some(target) {
+                    ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(egui::pos2(target.0 as f32, target.1 as f32)));
+                    self.last_follow_position = Some(target);
+                }
+            }
+        }
         ctx.request_repaint_after(std::time::Duration::from_millis(180));
     }
 
@@ -51,6 +62,11 @@ impl RedshiftOverlay {
             0 | 1 => {
                 ui.label(RichText::new(if self.selected_tab == 0 { "Welcome back." } else { "HUD WORKSPACE" }).size(19.0).strong().color(TEXT));
                 ui.label(RichText::new("Independent desktop widgets. Game telemetry is not connected yet.").color(MUTED));
+                if let Some(game) = self.minecraft_window.as_ref() {
+                    ui.add_space(8.0);
+                    ui.label(RichText::new(format!("WINDOW  •  {} × {}", game.width, game.height)).size(10.0).color(MUTED));
+                    ui.label(RichText::new(game.title.chars().take(64).collect::<String>()).size(11.0).color(TEXT));
+                }
                 ui.add_space(14.0);
                 Self::card(ui, "Status widget", "Local overlay status panel", &mut self.show_status_widget);
                 ui.add_space(8.0);
@@ -77,6 +93,10 @@ impl RedshiftOverlay {
             _ => {
                 ui.label(RichText::new("SETTINGS").size(19.0).strong().color(TEXT));
                 ui.label(RichText::new("Global hotkey: Right Shift").color(TEXT));
+                ui.add_space(10.0);
+                ui.checkbox(&mut self.follow_game_window, "Follow Minecraft window");
+                ui.label(RichText::new("Moves the panel near the game when Minecraft is focused.").size(11.0).color(MUTED));
+                ui.add_space(10.0);
                 ui.label(RichText::new("Transparent always-on-top window").color(MUTED));
                 ui.label(RichText::new("Visible to normal screen capture").color(MUTED));
             }
@@ -104,8 +124,9 @@ impl eframe::App for RedshiftOverlay {
                 });
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     if ui.button(RichText::new("×").size(20.0).color(TEXT)).clicked() { self.menu_open = false; }
-                    let status = if self.minecraft_found { "MINECRAFT DETECTED" } else { "WAITING FOR GAME" };
-                    ui.label(RichText::new(status).size(9.0).color(if self.minecraft_found { Color32::from_rgb(108, 226, 166) } else { MUTED }));
+                    let detected = self.minecraft_window.is_some();
+                    let status = if detected { "MINECRAFT DETECTED" } else { "WAITING FOR GAME" };
+                    ui.label(RichText::new(status).size(9.0).color(if detected { Color32::from_rgb(108, 226, 166) } else { MUTED }));
                 });
             });
             ui.add_space(8.0);
