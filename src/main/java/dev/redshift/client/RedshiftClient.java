@@ -2,6 +2,7 @@ package dev.redshift.client;
 
 import dev.redshift.client.core.ClientConfig;
 import dev.redshift.client.core.ModuleManager;
+import dev.redshift.client.hud.HudLayout;
 import dev.redshift.client.hud.RedshiftHud;
 import dev.redshift.client.ui.ClickGuiScreen;
 import net.fabricmc.api.ClientModInitializer;
@@ -17,6 +18,7 @@ public final class RedshiftClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        HudLayout.load();
         ModuleManager.initialize();
 
         HudElementRegistry.addLast(
@@ -25,7 +27,10 @@ public final class RedshiftClient implements ClientModInitializer {
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ModuleManager.save());
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            ModuleManager.save();
+            HudLayout.save();
+        });
 
         System.out.println("[REDSHIFT] Client initialized for Minecraft 1.21.11");
     }
