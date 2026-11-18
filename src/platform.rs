@@ -1,0 +1,47 @@
+use std::{sync::mpsc::Sender, thread, time::Duration};
+use windows_sys::Win32::{
+    Foundation::{HWND, LPARAM, BOOL},
+    UI::{
+        Input::KeyboardAndMouse::{GetAsyncKeyState, VK_RSHIFT},
+        WindowsAndMessaging::{EnumWindows, GetForegroundWindow, GetWindowTextW, IsWindowVisible},
+    },
+};
+
+pub fn start_hotkey_listener(sender: Sender<()>) {
+    thread::Builder::new().name("redshift-hotkey".into()).spawn(move || {
+        let mut was_down = false;
+        loop {
+            let down = unsafe { GetAsyncKeyState(VK_RSHIFT as i32) } < 0;
+            if down && !was_down { let _ = sender.send(()); }
+            was_down = down;
+            thread::sleep(Duration::from_millis(18));
+        }
+    }).expect("failed to start global hotkey listener");
+}
+
+pub fn minecraft_is_foreground() -> bool {
+    let hwnd = unsafe { GetForegroundWindow() };
+    !hwnd.is_null() && window_title(hwnd).to_lowercase().contains("minecraft")
+}
+
+pub fn find_minecraft_window() -> Option<HWND> {
+    struct Search { found: HWND }
+    unsafe extern "system" fn callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        if IsWindowVisible(hwnd) == 0 { return 1; }
+        let state = &mut *(lparam as *mut Search);
+        if window_title(hwnd).to_lowercase().contains("minecraft") {
+            state.found = hwnd;
+            return 0;
+        }
+        1
+    }
+    let mut search = Search { found: std::ptr::null_mut() };
+    unsafe { EnumWindows(Some(callback), &mut search as *mut Search as LPARAM); }
+    if search.found.is_null() { None } else { Some(search.found) }
+}
+
+fn window_title(hwnd: HWND) -> String {
+    let mut buffer = [0u16; 512];
+    let len = unsafe { GetWindowTextW(hwnd, buffer.as_mut_ptr(), buffer.len() as i32) };
+    if len <= 0 { String::new() } else { String::from_utf16_lossy(&buffer[..len as usize]) }
+}
