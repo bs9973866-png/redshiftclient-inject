@@ -13,6 +13,7 @@ REDSHIFT is a separate desktop application. It does not require Fabric, Forge, N
 - Minecraft window-title detection, bounds, and foreground state
 - Optional follow mode that positions the panel near the focused Minecraft window
 - Optional automatic menu hiding when Minecraft loses focus, with Right Shift manual override
+- Optional hiding of the entire overlay window while Minecraft is minimized
 - Optional HUD-widget visibility limited to the focused Minecraft window
 - Dashboard, HUD Editor, Visuals, Profiles, and Settings sections
 - Draggable status, FPS-preview, and crosshair-preview widgets
