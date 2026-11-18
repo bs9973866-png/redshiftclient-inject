@@ -35,3 +35,10 @@ The desktop overlay is independent of Minecraft mod loaders. It does not inject 
 - Added a 0.8×–1.3× overlay-wide UI scale control.
 - Persisted the selected scale in the local JSON profile.
 - Kept compatibility with older profiles through a default scale value.
+
+
+## Multi-monitor positioning
+- [x] Detect the monitor containing the Minecraft window.
+- [x] Read that monitor's usable work area (excluding the taskbar).
+- [x] Clamp the followed overlay panel position to the same monitor's work area.
+- [ ] Validate mixed-DPI behavior on Windows with multiple monitors.
