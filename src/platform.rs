@@ -1,11 +1,23 @@
 use std::{sync::mpsc::Sender, thread, time::Duration};
 use windows_sys::Win32::{
-    Foundation::{HWND, LPARAM, BOOL},
+    Foundation::{HWND, LPARAM, BOOL, RECT},
     UI::{
         Input::KeyboardAndMouse::{GetAsyncKeyState, VK_RSHIFT},
-        WindowsAndMessaging::{EnumWindows, GetForegroundWindow, GetWindowTextW, IsWindowVisible},
+        WindowsAndMessaging::{
+            EnumWindows, GetForegroundWindow, GetWindowRect, GetWindowTextW, IsWindowVisible,
+        },
     },
 };
+
+#[derive(Clone, Debug)]
+pub struct MinecraftWindowInfo {
+    pub title: String,
+    pub left: i32,
+    pub top: i32,
+    pub width: i32,
+    pub height: i32,
+    pub is_foreground: bool,
+}
 
 pub fn start_hotkey_listener(sender: Sender<()>) {
     thread::Builder::new().name("redshift-hotkey".into()).spawn(move || {
@@ -24,7 +36,7 @@ pub fn minecraft_is_foreground() -> bool {
     !hwnd.is_null() && window_title(hwnd).to_lowercase().contains("minecraft")
 }
 
-pub fn find_minecraft_window() -> Option<HWND> {
+pub fn find_minecraft_window() -> Option<MinecraftWindowInfo> {
     struct Search { found: HWND }
     unsafe extern "system" fn callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
         if IsWindowVisible(hwnd) == 0 { return 1; }
@@ -35,9 +47,23 @@ pub fn find_minecraft_window() -> Option<HWND> {
         }
         1
     }
+
     let mut search = Search { found: std::ptr::null_mut() };
     unsafe { EnumWindows(Some(callback), &mut search as *mut Search as LPARAM); }
-    if search.found.is_null() { None } else { Some(search.found) }
+    if search.found.is_null() { return None; }
+
+    let mut rect: RECT = unsafe { std::mem::zeroed() };
+    if unsafe { GetWindowRect(search.found, &mut rect) } == 0 { return None; }
+
+    let foreground = unsafe { GetForegroundWindow() };
+    Some(MinecraftWindowInfo {
+        title: window_title(search.found),
+        left: rect.left,
+        top: rect.top,
+        width: rect.right - rect.left,
+        height: rect.bottom - rect.top,
+        is_foreground: foreground == search.found,
+    })
 }
 
 fn window_title(hwnd: HWND) -> String {
