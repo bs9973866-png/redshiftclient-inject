@@ -10,7 +10,8 @@ REDSHIFT is a separate desktop application. It does not require Fabric, Forge, N
 - Transparent, borderless, always-on-top window
 - Black / Crimson / Liquid Glass visual direction
 - Global Right Shift menu toggle
-- Minecraft window-title detection
+- Minecraft window-title detection, bounds, and foreground state
+- Optional follow mode that positions the panel near the focused Minecraft window
 - Dashboard, HUD, Visuals, Profiles, and Settings sections
 - Windows release build through GitHub Actions
 
