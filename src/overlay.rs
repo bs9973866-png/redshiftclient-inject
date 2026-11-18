@@ -74,6 +74,7 @@ pub struct RedshiftOverlay {
     minecraft_window: Option<platform::MinecraftWindowInfo>,
     follow_game_window: bool,
     last_follow_position: Option<(i32, i32)>,
+    last_game_foreground: bool,
     opacity: f32,
     ui_scale: f32,
     accent_glow: bool,
@@ -98,6 +99,7 @@ impl RedshiftOverlay {
             minecraft_window: None,
             follow_game_window: profile.follow_game_window,
             last_follow_position: None,
+            last_game_foreground: false,
             opacity: profile.opacity,
             ui_scale: profile.ui_scale.clamp(0.8, 1.3),
             accent_glow: profile.accent_glow,
@@ -173,12 +175,11 @@ impl RedshiftOverlay {
             self.menu_open = !self.menu_open;
         }
         self.minecraft_window = platform::find_minecraft_window();
-        if self.auto_hide_menu_when_unfocused {
-            let game_is_active = self.minecraft_window.as_ref().is_some_and(|game| game.is_foreground);
-            if !game_is_active {
-                self.menu_open = false;
-            }
+        let game_is_active = self.minecraft_window.as_ref().is_some_and(|game| game.is_foreground);
+        if self.auto_hide_menu_when_unfocused && self.last_game_foreground && !game_is_active {
+            self.menu_open = false;
         }
+        self.last_game_foreground = game_is_active;
         if self.follow_game_window {
             if let Some(game) = self.minecraft_window.as_ref()
                 .filter(|game| game.is_foreground && game.width > 0 && game.height > 0)
