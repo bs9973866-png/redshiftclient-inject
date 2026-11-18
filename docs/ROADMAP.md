@@ -14,6 +14,7 @@
 - [x] Optional HUD widgets only while Minecraft is focused
 - [x] Optional automatic menu hide on focus loss with manual hotkey override
 - [x] Detect minimized Minecraft windows and optionally hide the overlay until restored
+- [x] Pass mouse input through to Minecraft while the overlay menu is hidden
 - [ ] Reliable show / hide and focus behavior
 - [x] Per-monitor DPI awareness and DPI-aware multi-monitor positioning
 - [ ] Validate mixed-DPI behavior on physical Windows displays
