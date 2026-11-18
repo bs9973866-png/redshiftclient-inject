@@ -16,6 +16,7 @@ This repository has been converted from the temporary Rust desktop-overlay exper
 - Search modules by name, description or ID within the selected category
 - Left-click toggles a module; middle-click opens module options; right-click assigns an individual module keybind
 - Module states, boolean module settings, module keybinds and GUI keybind are saved to `config/redshift-client.json`
+- Draggable in-game HUD editor; widget positions persist in `config/redshift-hud-layout.json`
 - HUD modules render inside the actual Minecraft HUD
 - Modules: Sprint Assist, Watermark, Coordinates, FPS Counter, Keystrokes, Armor Status, Held Item, Attack Cooldown, Crimson Crosshair and World Clock
 
@@ -40,8 +41,9 @@ Install it by placing the JAR into the mods folder of a Minecraft 1.21.11 Fabric
 - Middle-click a module card to open its options.
 - Sprint Assist includes a saved option to pause while using an item.
 - Use the search field above the cards to filter the selected category.
-- Open Settings to change the ClickGUI hotkey.
+- Open Settings to change the ClickGUI hotkey or launch the HUD Editor.
+- In HUD Editor, drag any widget and press Escape to save and exit; press R to reset positions.
 
 ## Project direction
 
-The next development milestones are a draggable HUD editor, slider settings, theme customization, additional visual modules, and more client-side quality-of-life options. This is a Fabric mod, not an external overlay. It does not inject code into a process or bypass anti-cheat.
+The next development milestones are numeric settings and sliders, theme customization, additional visual modules, and more client-side quality-of-life options. This is a Fabric mod, not an external overlay. It does not inject code into a process or bypass anti-cheat.
