@@ -79,6 +79,7 @@ pub struct RedshiftOverlay {
     last_follow_position: Option<(i32, i32)>,
     last_game_foreground: bool,
     viewport_visible: bool,
+    mouse_passthrough: bool,
     opacity: f32,
     ui_scale: f32,
     accent_glow: bool,
@@ -106,6 +107,7 @@ impl RedshiftOverlay {
             last_follow_position: None,
             last_game_foreground: false,
             viewport_visible: true,
+            mouse_passthrough: false,
             opacity: profile.opacity,
             ui_scale: profile.ui_scale.clamp(0.8, 1.3),
             accent_glow: profile.accent_glow,
@@ -398,6 +400,7 @@ impl RedshiftOverlay {
                 ui.add_space(8.0);
                 ui.checkbox(&mut self.auto_hide_menu_when_unfocused, "Auto-hide menu when Minecraft loses focus");
                 ui.label(RichText::new("Right Shift can still reopen the menu at any time.").size(10.0).color(MUTED));
+                ui.label(RichText::new("With the menu closed, mouse clicks pass through to Minecraft. Open the menu to move HUD previews.").size(10.0).color(MUTED));
                 ui.add_space(8.0);
                 ui.checkbox(&mut self.hide_when_game_minimized, "Hide overlay when Minecraft is minimized");
                 ui.label(RichText::new("The whole transparent overlay window is hidden until Minecraft is restored.").size(10.0).color(MUTED));
@@ -415,6 +418,14 @@ impl eframe::App for RedshiftOverlay {
         // interface zoom on top of it.
         ctx.set_zoom_factor(self.ui_scale);
         self.poll(ctx);
+
+        // When the menu is hidden, let mouse clicks pass through the transparent
+        // desktop window so Minecraft remains playable underneath it.
+        let should_passthrough = !self.menu_open;
+        if should_passthrough != self.mouse_passthrough {
+            ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(should_passthrough));
+            self.mouse_passthrough = should_passthrough;
+        }
 
         // HUD preview widgets are independent of the settings panel. Right Shift
         // hides the menu, but enabled desktop widgets remain visible.
