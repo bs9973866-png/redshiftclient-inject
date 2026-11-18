@@ -1,5 +1,6 @@
 package dev.redshift.client;
 
+import dev.redshift.client.core.ClientConfig;
 import dev.redshift.client.core.ModuleManager;
 import dev.redshift.client.hud.RedshiftHud;
 import dev.redshift.client.ui.ClickGuiScreen;
@@ -12,7 +13,7 @@ import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public final class RedshiftClient implements ClientModInitializer {
-    private boolean rightShiftWasDown;
+    private boolean guiKeyWasDown;
 
     @Override
     public void onInitializeClient() {
@@ -32,12 +33,18 @@ public final class RedshiftClient implements ClientModInitializer {
     private void onClientTick(Minecraft client) {
         ModuleManager.tick(client);
 
-        boolean rightShiftDown = GLFW.glfwGetKey(
+        if (client.screen instanceof ClickGuiScreen clickGui && clickGui.isCapturingGuiKey()) {
+            guiKeyWasDown = false;
+            return;
+        }
+
+        int guiKey = ClientConfig.guiKey();
+        boolean guiKeyDown = GLFW.glfwGetKey(
                 client.getWindow().handle(),
-                GLFW.GLFW_KEY_RIGHT_SHIFT
+                guiKey
         ) == GLFW.GLFW_PRESS;
 
-        if (rightShiftDown && !rightShiftWasDown) {
+        if (guiKeyDown && !guiKeyWasDown) {
             if (client.screen instanceof ClickGuiScreen clickGui) {
                 clickGui.closeGui();
             } else if (client.screen == null) {
@@ -45,6 +52,6 @@ public final class RedshiftClient implements ClientModInitializer {
             }
         }
 
-        rightShiftWasDown = rightShiftDown;
+        guiKeyWasDown = guiKeyDown;
     }
 }
