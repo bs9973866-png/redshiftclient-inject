@@ -13,7 +13,8 @@ REDSHIFT is a separate desktop application. It does not require Fabric, Forge, N
 - Minecraft window-title detection, bounds, and foreground state
 - Optional follow mode that positions the panel near the focused Minecraft window
 - Dashboard, HUD Editor, Visuals, Profiles, and Settings sections
-- Draggable desktop HUD preview widgets
+- Draggable status, FPS-preview, and crosshair-preview widgets
+- Persistent local JSON profile for widget positions and visual settings
 - Save and load a local JSON profile under `%APPDATA%/REDSHIFT/profiles/`
 - Windows release build through GitHub Actions
 
