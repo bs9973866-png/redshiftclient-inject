@@ -5,6 +5,7 @@ import dev.redshift.client.core.ClientConfig;
 import dev.redshift.client.core.ClientModule;
 import dev.redshift.client.core.ModuleCategory;
 import dev.redshift.client.core.ModuleManager;
+import dev.redshift.client.hud.HudLayout;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
@@ -194,6 +195,21 @@ public final class ClickGuiScreen extends Screen {
             graphics.drawString(this.font, "Your keybind is stored in config/redshift-client.json.",
                     contentX + 2, cardY + 103, 0xFF9C899F);
         }
+
+        int editorY = cardY + 118;
+        graphics.fill(cardX, editorY, cardRight, editorY + 66, 0xCC15101C);
+        graphics.fill(cardX, editorY, cardRight, editorY + 1, 0x66FF5578);
+        graphics.drawString(this.font, "HUD LAYOUT EDITOR", cardX + 14, editorY + 14, 0xFFF8F1F5);
+        graphics.drawString(this.font, "Drag real HUD elements to new positions.", cardX + 14, editorY + 33, 0xFFAA9CAE);
+
+        int editorButtonX = cardRight - 146;
+        int editorButtonY = editorY + 17;
+        boolean editorHovered = inside(mouseX, mouseY, editorButtonX, editorButtonY,
+                editorButtonX + 132, editorButtonY + 32);
+        graphics.fill(editorButtonX, editorButtonY, editorButtonX + 132, editorButtonY + 32,
+                editorHovered ? 0xCC542039 : 0xAA281522);
+        graphics.fill(editorButtonX, editorButtonY, editorButtonX + 132, editorButtonY + 1, 0xFFFF4568);
+        graphics.drawString(this.font, "OPEN EDITOR", editorButtonX + 24, editorButtonY + 12, 0xFFFFFFFF);
     }
 
     private void renderModuleSettings(
@@ -383,6 +399,18 @@ public final class ClickGuiScreen extends Screen {
             int buttonY = y + 124 + 25;
             if (inside(mouseX, mouseY, buttonX, buttonY, buttonX + 132, buttonY + 32)) {
                 waitingForGuiKey = true;
+                return true;
+            }
+
+            int editorY = y + 124 + 118;
+            int editorButtonX = cardRight - 146;
+            int editorButtonY = editorY + 17;
+            if (inside(mouseX, mouseY, editorButtonX, editorButtonY,
+                    editorButtonX + 132, editorButtonY + 32)) {
+                if (this.minecraft != null) {
+                    this.minecraft.setScreen(new HudEditorScreen());
+                }
+                return true;
             }
             return true;
         }
