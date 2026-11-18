@@ -26,6 +26,8 @@ struct OverlayProfile {
     show_crosshair_widget: bool,
     #[serde(default)]
     widgets_only_with_game: bool,
+    #[serde(default)]
+    auto_hide_menu_when_unfocused: bool,
 }
 
 fn default_crosshair_position() -> [f32; 2] { [370.0, 285.0] }
@@ -45,6 +47,7 @@ impl Default for OverlayProfile {
             crosshair_position: [370.0, 285.0],
             show_crosshair_widget: false,
             widgets_only_with_game: false,
+            auto_hide_menu_when_unfocused: false,
         }
     }
 }
@@ -78,6 +81,7 @@ pub struct RedshiftOverlay {
     show_status_widget: bool,
     show_crosshair_widget: bool,
     widgets_only_with_game: bool,
+    auto_hide_menu_when_unfocused: bool,
     fps_position: egui::Pos2,
     status_position: egui::Pos2,
     crosshair_position: egui::Pos2,
@@ -101,6 +105,7 @@ impl RedshiftOverlay {
             show_status_widget: profile.show_status_widget,
             show_crosshair_widget: profile.show_crosshair_widget,
             widgets_only_with_game: profile.widgets_only_with_game,
+            auto_hide_menu_when_unfocused: profile.auto_hide_menu_when_unfocused,
             fps_position: egui::pos2(profile.fps_position[0], profile.fps_position[1]),
             status_position: egui::pos2(profile.status_position[0], profile.status_position[1]),
             crosshair_position: egui::pos2(profile.crosshair_position[0], profile.crosshair_position[1]),
@@ -121,6 +126,7 @@ impl RedshiftOverlay {
             crosshair_position: [self.crosshair_position.x, self.crosshair_position.y],
             show_crosshair_widget: self.show_crosshair_widget,
             widgets_only_with_game: self.widgets_only_with_game,
+            auto_hide_menu_when_unfocused: self.auto_hide_menu_when_unfocused,
         }
     }
 
@@ -159,6 +165,7 @@ impl RedshiftOverlay {
         self.crosshair_position = egui::pos2(profile.crosshair_position[0], profile.crosshair_position[1]);
         self.show_crosshair_widget = profile.show_crosshair_widget;
         self.widgets_only_with_game = profile.widgets_only_with_game;
+        self.auto_hide_menu_when_unfocused = profile.auto_hide_menu_when_unfocused;
     }
 
     fn poll(&mut self, ctx: &egui::Context) {
@@ -166,6 +173,12 @@ impl RedshiftOverlay {
             self.menu_open = !self.menu_open;
         }
         self.minecraft_window = platform::find_minecraft_window();
+        if self.auto_hide_menu_when_unfocused {
+            let game_is_active = self.minecraft_window.as_ref().is_some_and(|game| game.is_foreground);
+            if !game_is_active {
+                self.menu_open = false;
+            }
+        }
         if self.follow_game_window {
             if let Some(game) = self.minecraft_window.as_ref()
                 .filter(|game| game.is_foreground && game.width > 0 && game.height > 0)
@@ -347,6 +360,9 @@ impl RedshiftOverlay {
                 ui.add_space(8.0);
                 ui.checkbox(&mut self.widgets_only_with_game, "Show HUD widgets only while Minecraft is focused");
                 ui.label(RichText::new("When enabled, desktop preview widgets disappear while another app is active.").size(10.0).color(MUTED));
+                ui.add_space(8.0);
+                ui.checkbox(&mut self.auto_hide_menu_when_unfocused, "Auto-hide menu when Minecraft loses focus");
+                ui.label(RichText::new("Right Shift can still reopen the menu at any time.").size(10.0).color(MUTED));
                 ui.add_space(10.0);
                 ui.label(RichText::new("Transparent always-on-top window").color(MUTED));
                 ui.label(RichText::new("Visible to normal screen capture").color(MUTED));
