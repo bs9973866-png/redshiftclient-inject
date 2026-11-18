@@ -13,6 +13,7 @@
 - [x] Optional follow mode while Minecraft is foreground
 - [x] Optional HUD widgets only while Minecraft is focused
 - [x] Optional automatic menu hide on focus loss with manual hotkey override
+- [x] Detect minimized Minecraft windows and optionally hide the overlay until restored
 - [ ] Reliable show / hide and focus behavior
 - [ ] Multi-monitor and DPI scaling support
 
