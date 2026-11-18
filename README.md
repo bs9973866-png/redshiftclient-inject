@@ -19,9 +19,9 @@ This repository has been converted from the temporary Rust desktop-overlay exper
 
 ## Build
 
-Requirements: Java 21 and Gradle 9.6.0.
+Build requirement: JDK 25 and Gradle 9.9.1 (required by the current Fabric Loom build plugin). The mod is compiled with Java 21 bytecode and runs on the Java 21 runtime used by Minecraft 1.21.11.
 
-Run: gradle build
+Run: gradle build --no-daemon
 
 The remapped mod JAR is written to:
 
