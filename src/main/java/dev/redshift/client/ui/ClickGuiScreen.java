@@ -1,5 +1,6 @@
 package dev.redshift.client.ui;
 
+import dev.redshift.client.core.BooleanSetting;
 import dev.redshift.client.core.ClientConfig;
 import dev.redshift.client.core.ClientModule;
 import dev.redshift.client.core.ModuleCategory;
@@ -20,6 +21,8 @@ public final class ClickGuiScreen extends Screen {
 
     private ModuleCategory selectedCategory = ModuleCategory.COMBAT;
     private boolean settingsOpen;
+    private boolean moduleSettingsOpen;
+    private String settingsModuleId;
     private boolean waitingForGuiKey;
     private String waitingForModuleKey;
     private String searchQuery = "";
@@ -89,9 +92,11 @@ public final class ClickGuiScreen extends Screen {
         int contentX = x + 180;
         if (settingsOpen) {
             renderSettings(graphics, mouseX, mouseY, x, y, contentX);
+        } else if (moduleSettingsOpen) {
+            renderModuleSettings(graphics, mouseX, mouseY, y, contentX);
         } else {
             graphics.drawString(this.font, selectedCategory.title().toUpperCase(), contentX, y + 77, 0xFFFFFFFF);
-            graphics.drawString(this.font, "LEFT CLICK  /  TOGGLE     RIGHT CLICK  /  BIND", contentX, y + 94, 0xFF9C899F);
+            graphics.drawString(this.font, "LEFT CLICK  /  TOGGLE   MIDDLE  /  OPTIONS   RIGHT  /  BIND", contentX, y + 94, 0xFF9C899F);
 
             int searchY = y + 108;
             graphics.fill(contentX, searchY, contentX + 506, searchY + 22, searchFocused ? 0xEE21121F : 0xCC15101C);
@@ -191,6 +196,55 @@ public final class ClickGuiScreen extends Screen {
         }
     }
 
+    private void renderModuleSettings(
+            GuiGraphics graphics,
+            int mouseX,
+            int mouseY,
+            int panelY,
+            int contentX
+    ) {
+        ClientModule module = ModuleManager.get(settingsModuleId);
+        if (module == null) {
+            graphics.drawString(this.font, "Module not found.", contentX, panelY + 90, 0xFF9C899F);
+            return;
+        }
+
+        graphics.drawString(this.font, module.name().toUpperCase(), contentX, panelY + 77, 0xFFFFFFFF);
+        graphics.drawString(this.font, "MODULE OPTIONS", contentX, panelY + 94, 0xFF9C899F);
+
+        int backY = panelY + 108;
+        boolean backHovered = inside(mouseX, mouseY, contentX, backY, contentX + 92, backY + 23);
+        graphics.fill(contentX, backY, contentX + 92, backY + 23,
+                backHovered ? 0xCC542039 : 0xAA281522);
+        graphics.fill(contentX, backY, contentX + 92, backY + 1, 0xFFFF4568);
+        graphics.drawString(this.font, "<  BACK", contentX + 22, backY + 8, 0xFFF8F1F5);
+
+        if (module.booleanSettings().isEmpty()) {
+            graphics.drawString(this.font, "This module has no configurable options yet.",
+                    contentX, panelY + 155, 0xFF9C899F);
+            return;
+        }
+
+        int rowY = panelY + 145;
+        for (BooleanSetting setting : module.booleanSettings()) {
+            int rowBottom = rowY + 54;
+            graphics.fill(contentX, rowY, contentX + 506, rowBottom, 0xCC15101C);
+            graphics.fill(contentX, rowY, contentX + 506, rowY + 1, 0x553D2D44);
+
+            graphics.drawString(this.font, setting.name(), contentX + 12, rowY + 10, 0xFFF8F1F5);
+            graphics.drawString(this.font, setting.description(), contentX + 12, rowY + 29, 0xFFAA9CAE);
+
+            String value = setting.isEnabled() ? "ON" : "OFF";
+            int valueColor = setting.isEnabled() ? 0xFFFF5578 : 0xFF766B7A;
+            int toggleX = contentX + 450;
+            graphics.fill(toggleX, rowY + 15, toggleX + 42, rowY + 38,
+                    setting.isEnabled() ? 0xAA542039 : 0xAA302A35);
+            graphics.fill(toggleX, rowY + 15, toggleX + 42, rowY + 16, 0xFFFF4568);
+            graphics.drawString(this.font, value, toggleX + 10, rowY + 23, valueColor);
+            rowY += 66;
+        }
+    }
+
     private static String guiKeyName() {
         int key = ClientConfig.guiKey();
         if (key == GLFW.GLFW_KEY_RIGHT_SHIFT) return "RIGHT SHIFT";
@@ -285,7 +339,7 @@ public final class ClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (click.button() != 0 && click.button() != 1) {
+        if (click.button() != 0 && click.button() != 1 && click.button() != 2) {
             return super.mouseClicked(click, doubled);
         }
 
@@ -306,6 +360,7 @@ public final class ClickGuiScreen extends Screen {
             if (inside(mouseX, mouseY, x + 12, rowY - 7, x + 160, rowY + 29)) {
                 selectedCategory = category;
                 settingsOpen = false;
+                moduleSettingsOpen = false;
                 searchFocused = false;
                 return true;
             }
@@ -314,6 +369,7 @@ public final class ClickGuiScreen extends Screen {
         int settingsRowY = navY + ModuleCategory.values().length * 48;
         if (inside(mouseX, mouseY, x + 12, settingsRowY - 7, x + 160, settingsRowY + 29)) {
             settingsOpen = true;
+            moduleSettingsOpen = false;
             searchFocused = false;
             waitingForGuiKey = false;
             return true;
@@ -331,6 +387,27 @@ public final class ClickGuiScreen extends Screen {
             return true;
         }
 
+        if (moduleSettingsOpen) {
+            if (inside(mouseX, mouseY, contentX, y + 108, contentX + 92, y + 131)) {
+                moduleSettingsOpen = false;
+                return true;
+            }
+
+            ClientModule module = ModuleManager.get(settingsModuleId);
+            if (module != null) {
+                int rowY = y + 145;
+                for (BooleanSetting setting : module.booleanSettings()) {
+                    if (inside(mouseX, mouseY, contentX, rowY, contentX + 506, rowY + 54)) {
+                        setting.toggle();
+                        ModuleManager.save();
+                        return true;
+                    }
+                    rowY += 66;
+                }
+            }
+            return true;
+        }
+
         int searchY = y + 108;
         if (inside(mouseX, mouseY, contentX, searchY, contentX + 506, searchY + 22)) {
             searchFocused = true;
@@ -344,6 +421,21 @@ public final class ClickGuiScreen extends Screen {
         int gapY = 12;
         int cardsStartY = y + 140;
         List<ClientModule> modules = filteredModules();
+
+        if (click.button() == 2) {
+            for (int index = 0; index < modules.size(); index++) {
+                int column = index % 2;
+                int row = index / 2;
+                int cardX = contentX + column * (cardWidth + gapX);
+                int cardY = cardsStartY + row * (cardHeight + gapY);
+                if (inside(mouseX, mouseY, cardX, cardY, cardX + cardWidth, cardY + cardHeight)) {
+                    settingsModuleId = modules.get(index).id();
+                    moduleSettingsOpen = true;
+                    return true;
+                }
+            }
+            return true;
+        }
 
         if (click.button() == 1) {
             for (int index = 0; index < modules.size(); index++) {
