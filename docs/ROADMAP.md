@@ -14,7 +14,9 @@
 ## 0.2 — ClickGUI and settings
 - [ ] Animated transitions and refined card layout.
 - [x] Search and module filtering by module name, description and ID.
-- [ ] Per-module settings and sliders.
+- [x] Reusable boolean-setting framework and module options screen.
+- [x] Sprint Assist option: pause while using items.
+- [ ] Numeric settings and sliders.
 - [x] Configurable ClickGUI keybind and individual module keybinds.
 - [ ] Multiple named profiles.
 
