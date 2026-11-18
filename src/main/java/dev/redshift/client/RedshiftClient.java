@@ -33,7 +33,7 @@ public final class RedshiftClient implements ClientModInitializer {
         ModuleManager.tick(client);
 
         boolean rightShiftDown = GLFW.glfwGetKey(
-                client.getWindow().getWindow(),
+                client.getWindow().getHandle(),
                 GLFW.GLFW_KEY_RIGHT_SHIFT
         ) == GLFW.GLFW_PRESS;
 
