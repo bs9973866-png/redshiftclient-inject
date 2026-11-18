@@ -1,6 +1,7 @@
 package dev.redshift.client.core;
 
 import net.minecraft.client.Minecraft;
+import org.lwjgl.glfw.GLFW;
 
 public abstract class ClientModule {
     private final String id;
@@ -8,6 +9,7 @@ public abstract class ClientModule {
     private final String description;
     private final ModuleCategory category;
     private boolean enabled;
+    private int keybind = GLFW.GLFW_KEY_UNKNOWN;
 
     protected ClientModule(String id, String name, String description, ModuleCategory category) {
         this.id = id;
@@ -34,6 +36,14 @@ public abstract class ClientModule {
 
     public final boolean isEnabled() {
         return enabled;
+    }
+
+    public final int keybind() {
+        return keybind;
+    }
+
+    public final void setKeybind(int keybind) {
+        this.keybind = keybind;
     }
 
     public final void toggle() {
