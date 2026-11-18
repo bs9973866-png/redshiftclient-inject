@@ -15,7 +15,7 @@ This repository has been converted from the temporary Rust desktop-overlay exper
 - Categories: Combat, Visuals, Movement, HUD and World
 - Module enable / disable state is saved to config/redshift-client.json
 - HUD modules render inside the actual Minecraft HUD
-- Sprint Assist, Watermark, Coordinates, FPS Counter, Attack Cooldown, Crimson Crosshair and World Clock
+- Sprint Assist, Watermark, Coordinates, FPS Counter, Attack Cooldown, Crimson Crosshair and World Clock, Keystrokes and Armor Status
 
 ## Build
 
