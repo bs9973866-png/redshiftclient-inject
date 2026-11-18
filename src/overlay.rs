@@ -412,6 +412,20 @@ impl RedshiftOverlay {
     }
 }
 
+impl Drop for RedshiftOverlay {
+    fn drop(&mut self) {
+        // Persist the current UI state automatically when the app exits.
+        let path = profile_path();
+        if let Some(parent) = path.parent() {
+            if fs::create_dir_all(parent).is_ok() {
+                if let Ok(json) = serde_json::to_string_pretty(&self.profile()) {
+                    let _ = fs::write(path, json);
+                }
+            }
+        }
+    }
+}
+
 impl eframe::App for RedshiftOverlay {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Preserve the OS-provided per-monitor DPI scale and apply the user's
