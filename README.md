@@ -34,3 +34,8 @@ Executable: target/release/redshift-inject-client.exe
 - Tabs — Dashboard, HUD, Visuals, Profiles, Settings
 
 See docs/ROADMAP.md for planned milestones.
+
+
+### Interface scaling
+
+The Visual System tab includes a persistent interface scale control (0.8×–1.3×). The selected scale is saved in the local JSON profile and applied to the entire desktop overlay window.
