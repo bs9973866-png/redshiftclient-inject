@@ -1,26 +1,32 @@
-# REDSHIFT Inject Client
+# REDSHIFT INJECT CLIENT
 
-A Windows companion application and Fabric client component for Minecraft Java 1.21.11.
+Standalone Windows overlay for Minecraft Java 1.21.11.
 
-## Architecture
+REDSHIFT is a separate desktop application. It does not require Fabric, Forge, NeoForge, Quilt, or any other Minecraft mod loader.
 
-- `client/`: Fabric client-side component loaded by Minecraft's supported mod loader.
-- `desktop/`: Windows companion app (planned) for profiles, configuration and process detection.
-- `shared/`: shared protocol/configuration definitions (planned).
+## Current foundation
 
-This project does **not** inject native DLLs into the JVM, patch game memory, bypass anti-cheat, or hide its presence. The supported integration path is a normal Fabric mod installed in the Minecraft instance. The companion app will manage configuration and detect a running game process without modifying it.
+- Rust desktop application
+- Transparent, borderless, always-on-top window
+- Black / Crimson / Liquid Glass visual direction
+- Global Right Shift menu toggle
+- Minecraft window-title detection
+- Dashboard, HUD, Visuals, Profiles, and Settings sections
+- Windows release build through GitHub Actions
 
-## Requirements
+The overlay is independent of the Minecraft mod loader and can sit above Vanilla, Fabric, Forge, NeoForge, or Quilt game windows. This is currently an external UI foundation: it does not read or modify Minecraft memory, inject DLLs, bypass anti-cheat, or hide from screen capture. Game telemetry and in-game rendering are not implemented yet.
 
-- Windows 10/11
-- Java 21
-- Minecraft Java 1.21.11
-- Fabric Loader compatible with Minecraft 1.21.11
+## Build
 
-## Development
+Requirements: Rust stable, Windows 10/11, and Visual Studio C++ Build Tools (MSVC).
 
-The first milestone establishes the Fabric client entrypoint and a lightweight in-game ClickGUI foundation. Build instructions will be added with the Gradle wrapper.
+Run: cargo build --release
 
-## Design
+Executable: target/release/redshift-inject-client.exe
 
-Black / Crimson / Liquid Glass: translucent layered panels, restrained highlights, smooth transitions, configurable accent color, and low-overhead rendering.
+## Controls
+
+- Right Shift — toggle the REDSHIFT menu
+- Tabs — Dashboard, HUD, Visuals, Profiles, Settings
+
+See docs/ROADMAP.md for planned milestones.
