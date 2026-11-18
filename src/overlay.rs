@@ -343,6 +343,11 @@ impl eframe::App for RedshiftOverlay {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         ctx.set_pixels_per_point(self.ui_scale);
         self.poll(ctx);
+
+        // HUD preview widgets are independent of the settings panel. Right Shift
+        // hides the menu, but enabled desktop widgets remain visible.
+        self.draw_hud_preview(ctx);
+
         if !self.menu_open {
             egui::CentralPanel::default().frame(egui::Frame::NONE).show(ctx, |ui| {
                 ui.allocate_space(egui::vec2(1.0, 1.0));
@@ -407,10 +412,6 @@ impl eframe::App for RedshiftOverlay {
                 ui.label(RichText::new("REDSHIFT • BUILD 0.2.0 • RIGHT SHIFT TO TOGGLE").size(9.0).color(MUTED));
             });
         });
-
-        if self.selected_tab == 1 {
-            self.draw_hud_preview(ctx);
-        }
 
         if self.accent_glow {
             let rect = ctx.available_rect();
