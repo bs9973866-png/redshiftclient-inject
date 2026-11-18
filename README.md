@@ -12,7 +12,9 @@ REDSHIFT is a separate desktop application. It does not require Fabric, Forge, N
 - Global Right Shift menu toggle
 - Minecraft window-title detection, bounds, and foreground state
 - Optional follow mode that positions the panel near the focused Minecraft window
-- Dashboard, HUD, Visuals, Profiles, and Settings sections
+- Dashboard, HUD Editor, Visuals, Profiles, and Settings sections
+- Draggable desktop HUD preview widgets
+- Save and load a local JSON profile under `%APPDATA%/REDSHIFT/profiles/`
 - Windows release build through GitHub Actions
 
 The overlay is independent of the Minecraft mod loader and can sit above Vanilla, Fabric, Forge, NeoForge, or Quilt game windows. This is currently an external UI foundation: it does not read or modify Minecraft memory, inject DLLs, bypass anti-cheat, or hide from screen capture. Game telemetry and in-game rendering are not implemented yet.
