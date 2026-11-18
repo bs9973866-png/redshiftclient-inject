@@ -35,9 +35,8 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
+    // The build runs on JDK 25 for current Loom, but compilation targets Java 21
+    // so the resulting mod runs on the Java version used by Minecraft 1.21.11.
     withSourcesJar()
 }
 
