@@ -4,6 +4,7 @@ import dev.redshift.client.core.ClientModule;
 import dev.redshift.client.core.ModuleCategory;
 import dev.redshift.client.core.ModuleManager;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -112,11 +113,13 @@ public final class ClickGuiScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) {
-            return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        if (click.button() != 0) {
+            return super.mouseClicked(click, doubled);
         }
 
+        double mouseX = click.x();
+        double mouseY = click.y();
         int x = panelX();
         int y = panelY();
         int closeX = x + PANEL_WIDTH - 30;
@@ -156,7 +159,7 @@ public final class ClickGuiScreen extends Screen {
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     private static boolean inside(double mouseX, double mouseY, int left, int top, int right, int bottom) {
