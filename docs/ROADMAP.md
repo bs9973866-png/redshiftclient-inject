@@ -21,9 +21,9 @@
 - [ ] Multiple named profiles.
 
 ## 0.3 — HUD editor
-- [ ] Drag-and-drop HUD element positioning.
+- [x] Drag-and-drop HUD element positioning with persistent normalized coordinates.
 - [ ] Independent HUD scale and opacity.
-- [ ] Toggleable HUD elements and live preview.
+- [x] Toggleable HUD elements and draggable live HUD layout preview.
 - [ ] Custom fonts and color presets.
 
 ## 0.4 — Visual and quality-of-life modules
