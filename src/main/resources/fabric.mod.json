@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "redshift",
+  "version": "${version}",
+  "name": "REDSHIFT CLIENT",
+  "description": "A black and crimson Fabric client with an in-game ClickGUI and modular HUD.",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.redshift.client.RedshiftClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.9",
+    "minecraft": "1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

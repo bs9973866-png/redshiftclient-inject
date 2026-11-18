@@ -1,6 +1,17 @@
-/target/
-**/*.rs.bk
-.env
-.DS_Store
-.vscode/
+# Gradle
+.gradle/
+build/
+out/
+run/
+
+# IDE
 .idea/
+*.iml
+.vscode/
+
+# Java
+*.class
+
+# OS
+.DS_Store
+Thumbs.db

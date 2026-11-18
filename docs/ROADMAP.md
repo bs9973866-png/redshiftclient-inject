@@ -1,56 +1,36 @@
-# REDSHIFT roadmap
+# REDSHIFT CLIENT roadmap
 
-## 0.1 — Standalone overlay foundation
-- [x] Replace Fabric project structure with Rust desktop application
-- [x] Transparent always-on-top window
-- [x] Right Shift global hotkey
-- [x] Basic Minecraft window-title detection
-- [x] Black / Crimson Liquid Glass UI shell
-- [x] Verify Windows release build in CI
+## 0.1 — Real in-game Fabric foundation
+- [x] Replace the temporary Rust overlay with a Fabric mod project.
+- [x] Target Minecraft 1.21.11 and Java 21.
+- [x] Native in-game ClickGUI opened by Right Shift.
+- [x] Category navigation: Combat, Visuals, Movement, HUD, World.
+- [x] Module enable / disable framework.
+- [x] Persist module states to a local JSON config.
+- [x] Render client HUD modules inside Minecraft.
+- [x] Add Sprint Assist, Watermark, Coordinates, FPS Counter, Attack Cooldown, Crimson Crosshair and World Clock.
+- [ ] Verify the remapped JAR in a real 1.21.11 Fabric game instance.
 
-## 0.2 — Overlay behavior
-- [x] Track Minecraft window position and size
-- [x] Optional follow mode while Minecraft is foreground
-- [x] Optional HUD widgets only while Minecraft is focused
-- [x] Optional automatic menu hide on focus loss with manual hotkey override
-- [x] Detect minimized Minecraft windows and optionally hide the overlay until restored
-- [x] Pass mouse input through to Minecraft while the overlay menu is hidden
-- [ ] Reliable show / hide and focus behavior
-- [x] Per-monitor DPI awareness and DPI-aware multi-monitor positioning
-- [ ] Validate mixed-DPI behavior on physical Windows displays
+## 0.2 — ClickGUI and settings
+- [ ] Animated transitions and refined card layout.
+- [ ] Search and module filtering.
+- [ ] Per-module settings and sliders.
+- [ ] Configurable keybinds.
+- [ ] Multiple named profiles.
 
-## 0.3 — HUD and customization
-- [x] Draggable desktop HUD preview widgets
-- [x] Persistent local JSON profile with manual save/load and save-on-exit
-- [x] Opacity, accent-glow toggle, and UI scale controls
-- [ ] Animation controls
-- [x] Draggable desktop status/FPS preview and crosshair preview widgets
+## 0.3 — HUD editor
+- [ ] Drag-and-drop HUD element positioning.
+- [ ] Independent HUD scale and opacity.
+- [ ] Toggleable HUD elements and live preview.
+- [ ] Custom fonts and color presets.
 
-## 0.4 — Windows companion features
-- [ ] Instance detection for common launchers
-- [ ] Per-instance profiles
-- [ ] Installer and portable release
+## 0.4 — Visual and quality-of-life modules
+- [ ] More crosshair styles and hit feedback visuals.
+- [ ] Item / armor status HUD.
+- [ ] Keystrokes and CPS display.
+- [ ] World and environment display options.
+- [ ] Additional movement quality-of-life modules.
 
 ## Compatibility boundary
-The desktop overlay is independent of Minecraft mod loaders. It does not inject native code into the game, patch process memory, bypass anti-cheat, or conceal itself from ordinary capture tools.
 
-
-## Completed — Interface scaling
-- Added a 0.8×–1.3× overlay-wide UI scale control.
-- Persisted the selected scale in the local JSON profile.
-- Kept compatibility with older profiles through a default scale value.
-
-
-## Multi-monitor positioning
-- [x] Detect the monitor containing the Minecraft window.
-- [x] Read that monitor's usable work area (excluding the taskbar).
-- [x] Clamp the followed overlay panel position to the same monitor's work area.
-
-
-## DPI-aware multi-monitor implementation
-- [x] Request Per-Monitor V2 DPI awareness before creating the native app window, with a Per-Monitor V1 fallback.
-- [x] Read the Minecraft window's effective DPI.
-- [x] Convert physical desktop coordinates to egui logical viewport positions.
-- [x] Clamp the panel using target-monitor DPI-adjusted dimensions and its usable work area.
-- [x] Preserve native DPI scale while applying the app's independent UI zoom.
-- [ ] Validate on physical Windows 10/11 systems with mixed monitor scale factors.
+REDSHIFT is a normal client-side Fabric mod. Its features run through Minecraft and Fabric APIs; it does not inject native code into the game process or bypass anti-cheat systems.
