@@ -3,6 +3,8 @@ mod overlay;
 mod platform;
 use eframe::egui;
 fn main() -> eframe::Result<()> {
+    // Must run before eframe/winit creates the first native window.
+    platform::enable_per_monitor_dpi_awareness();
     let (tx, rx) = std::sync::mpsc::channel();
     platform::start_hotkey_listener(tx);
     let options = eframe::NativeOptions {
