@@ -1,12 +1,15 @@
 package dev.redshift.client.ui;
 
+import dev.redshift.client.core.ClientConfig;
 import dev.redshift.client.core.ClientModule;
 import dev.redshift.client.core.ModuleCategory;
 import dev.redshift.client.core.ModuleManager;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -15,6 +18,8 @@ public final class ClickGuiScreen extends Screen {
     private static final int PANEL_HEIGHT = 410;
 
     private ModuleCategory selectedCategory = ModuleCategory.COMBAT;
+    private boolean settingsOpen;
+    private boolean waitingForGuiKey;
 
     public ClickGuiScreen() {
         super(Component.literal("REDSHIFT CLIENT"));
@@ -67,9 +72,22 @@ public final class ClickGuiScreen extends Screen {
             graphics.drawString(this.font, category.title(), x + 28, rowY + 5, color);
         }
 
+        int settingsRowY = navY + ModuleCategory.values().length * 48;
+        if (settingsOpen) {
+            graphics.fill(x + 12, settingsRowY - 7, x + 160, settingsRowY + 29, 0x66FF355D);
+            graphics.fill(x + 12, settingsRowY - 7, x + 15, settingsRowY + 29, 0xFFFF355D);
+        } else if (inside(mouseX, mouseY, x + 12, settingsRowY - 7, x + 160, settingsRowY + 29)) {
+            graphics.fill(x + 12, settingsRowY - 7, x + 160, settingsRowY + 29, 0x33FFFFFF);
+        }
+        graphics.drawString(this.font, "Settings", x + 28, settingsRowY + 5,
+                settingsOpen ? 0xFFFF4568 : 0xFFAA9CAE);
+
         int contentX = x + 180;
-        graphics.drawString(this.font, selectedCategory.title().toUpperCase(), contentX, y + 77, 0xFFFFFFFF);
-        graphics.drawString(this.font, "MODULES  /  CLICK A CARD TO TOGGLE", contentX, y + 94, 0xFF9C899F);
+        if (settingsOpen) {
+            renderSettings(graphics, mouseX, mouseY, x, y, contentX);
+        } else {
+            graphics.drawString(this.font, selectedCategory.title().toUpperCase(), contentX, y + 77, 0xFFFFFFFF);
+            graphics.drawString(this.font, "MODULES  /  CLICK A CARD TO TOGGLE", contentX, y + 94, 0xFF9C899F);
 
         List<ClientModule> modules = ModuleManager.byCategory(selectedCategory);
         if (modules.isEmpty()) {
@@ -107,9 +125,85 @@ public final class ClickGuiScreen extends Screen {
             graphics.drawString(this.font, status, cardX + cardWidth - 36, cardY + 48, statusColor);
         }
 
+        }
+
         graphics.fill(x + 12, y + PANEL_HEIGHT - 34, x + PANEL_WIDTH - 12, y + PANEL_HEIGHT - 33, 0x33FF5578);
-        graphics.drawString(this.font, "REDSHIFT  •  FABRIC CLIENT  •  SETTINGS SAVE AUTOMATICALLY",
+        graphics.drawString(this.font, "REDSHIFT  •  FABRIC CLIENT  •  GUI KEY: " + guiKeyName(),
                 x + 20, y + PANEL_HEIGHT - 23, 0xFF877A8D);
+    }
+
+    private void renderSettings(
+            GuiGraphics graphics,
+            int mouseX,
+            int mouseY,
+            int panelX,
+            int panelY,
+            int contentX
+    ) {
+        graphics.drawString(this.font, "CLIENT SETTINGS", contentX, panelY + 77, 0xFFFFFFFF);
+        graphics.drawString(this.font, "INPUT  /  INTERFACE", contentX, panelY + 94, 0xFF9C899F);
+
+        int cardX = contentX;
+        int cardY = panelY + 124;
+        int cardRight = panelX + PANEL_WIDTH - 22;
+        graphics.fill(cardX, cardY, cardRight, cardY + 86, 0xCC15101C);
+        graphics.fill(cardX, cardY, cardRight, cardY + 1, 0x66FF5578);
+        graphics.drawString(this.font, "CLICKGUI KEYBIND", cardX + 14, cardY + 14, 0xFFF8F1F5);
+        graphics.drawString(this.font, "Open or close the REDSHIFT interface.", cardX + 14, cardY + 31, 0xFFAA9CAE);
+        graphics.drawString(this.font, "CURRENT  " + guiKeyName(), cardX + 14, cardY + 52, 0xFFFF8BA2);
+
+        int buttonX = cardRight - 146;
+        int buttonY = cardY + 25;
+        boolean hovered = inside(mouseX, mouseY, buttonX, buttonY, buttonX + 132, buttonY + 32);
+        graphics.fill(buttonX, buttonY, buttonX + 132, buttonY + 32,
+                waitingForGuiKey ? 0xDD70233E : (hovered ? 0xCC542039 : 0xAA281522));
+        graphics.fill(buttonX, buttonY, buttonX + 132, buttonY + 1, 0xFFFF4568);
+        String buttonText = waitingForGuiKey ? "PRESS A KEY" : "CHANGE KEY";
+        int textX = buttonX + (132 - this.font.width(buttonText)) / 2;
+        graphics.drawString(this.font, buttonText, textX, buttonY + 12, 0xFFFFFFFF);
+
+        if (waitingForGuiKey) {
+            graphics.drawString(this.font, "Press any key to assign it. ESC cancels.",
+                    contentX + 2, cardY + 103, 0xFFFF8BA2);
+        } else {
+            graphics.drawString(this.font, "Your keybind is stored in config/redshift-client.json.",
+                    contentX + 2, cardY + 103, 0xFF9C899F);
+        }
+    }
+
+    private static String guiKeyName() {
+        int key = ClientConfig.guiKey();
+        if (key == GLFW.GLFW_KEY_RIGHT_SHIFT) return "RIGHT SHIFT";
+        if (key == GLFW.GLFW_KEY_LEFT_SHIFT) return "LEFT SHIFT";
+        if (key == GLFW.GLFW_KEY_ESCAPE) return "ESCAPE";
+        if (key == GLFW.GLFW_KEY_SPACE) return "SPACE";
+        if (key == GLFW.GLFW_KEY_ENTER) return "ENTER";
+        if (key >= GLFW.GLFW_KEY_A && key <= GLFW.GLFW_KEY_Z) {
+            return String.valueOf((char) ('A' + key - GLFW.GLFW_KEY_A));
+        }
+        String name = GLFW.glfwGetKeyName(key, 0);
+        return name == null ? "KEY " + key : name.toUpperCase(java.util.Locale.ROOT);
+    }
+
+    public boolean isCapturingGuiKey() {
+        return waitingForGuiKey;
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent input) {
+        if (waitingForGuiKey) {
+            int key = input.key();
+            if (key == GLFW.GLFW_KEY_ESCAPE) {
+                waitingForGuiKey = false;
+                return true;
+            }
+            if (key != GLFW.GLFW_KEY_UNKNOWN) {
+                ClientConfig.setGuiKey(key);
+            }
+            waitingForGuiKey = false;
+            return true;
+        }
+        return super.keyPressed(input);
     }
 
     @Override
@@ -134,11 +228,28 @@ public final class ClickGuiScreen extends Screen {
             int rowY = navY + category.ordinal() * 48;
             if (inside(mouseX, mouseY, x + 12, rowY - 7, x + 160, rowY + 29)) {
                 selectedCategory = category;
+                settingsOpen = false;
                 return true;
             }
         }
 
+        int settingsRowY = navY + ModuleCategory.values().length * 48;
+        if (inside(mouseX, mouseY, x + 12, settingsRowY - 7, x + 160, settingsRowY + 29)) {
+            settingsOpen = true;
+            waitingForGuiKey = false;
+            return true;
+        }
+
         int contentX = x + 180;
+        if (settingsOpen) {
+            int cardRight = x + PANEL_WIDTH - 22;
+            int buttonX = cardRight - 146;
+            int buttonY = y + 124 + 25;
+            if (inside(mouseX, mouseY, buttonX, buttonY, buttonX + 132, buttonY + 32)) {
+                waitingForGuiKey = true;
+            }
+            return true;
+        }
         int cardWidth = 245;
         int cardHeight = 66;
         int gapX = 12;
