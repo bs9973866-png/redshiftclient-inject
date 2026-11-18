@@ -13,7 +13,7 @@ fn main() -> eframe::Result<()> {
             .with_position([100.0, 100.0])
             .with_decorations(false)
             .with_transparent(true)
-            .with_window_level(egui::ViewportLevel::AlwaysOnTop),
+            .with_window_level(egui::WindowLevel::AlwaysOnTop),
         ..Default::default()
     };
     eframe::run_native("REDSHIFT Overlay", options,
