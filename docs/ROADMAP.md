@@ -8,14 +8,14 @@
 - [x] Module enable / disable framework.
 - [x] Persist module states to a local JSON config.
 - [x] Render client HUD modules inside Minecraft.
-- [x] Add Sprint Assist, Watermark, Coordinates, FPS Counter, Attack Cooldown, Crimson Crosshair and World Clock.
+- [x] Add Sprint Assist, Watermark, Coordinates, FPS Counter, Attack Cooldown, Crimson Crosshair, World Clock, Keystrokes, Armor Status and Held Item.
 - [ ] Verify the remapped JAR in a real 1.21.11 Fabric game instance.
 
 ## 0.2 — ClickGUI and settings
 - [ ] Animated transitions and refined card layout.
-- [ ] Search and module filtering.
+- [x] Search and module filtering by module name, description and ID.
 - [ ] Per-module settings and sliders.
-- [ ] Configurable keybinds.
+- [x] Configurable ClickGUI keybind and individual module keybinds.
 - [ ] Multiple named profiles.
 
 ## 0.3 — HUD editor
@@ -26,8 +26,9 @@
 
 ## 0.4 — Visual and quality-of-life modules
 - [ ] More crosshair styles and hit feedback visuals.
-- [ ] Item / armor status HUD.
-- [ ] Keystrokes and CPS display.
+- [x] Held-item and armor durability HUD.
+- [x] Keystrokes display.
+- [ ] CPS display.
 - [ ] World and environment display options.
 - [ ] Additional movement quality-of-life modules.
 
