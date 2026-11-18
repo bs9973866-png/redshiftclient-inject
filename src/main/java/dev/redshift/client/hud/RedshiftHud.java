@@ -4,6 +4,8 @@ import dev.redshift.client.core.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 
 public final class RedshiftHud {
     private RedshiftHud() {
@@ -109,41 +111,48 @@ public final class RedshiftHud {
     }
 
     private static void renderArmor(GuiGraphics graphics, Minecraft client) {
-        int count = 0;
-        for (var stack : client.player.getArmorSlots()) {
+        ItemStack[] armor = {
+                client.player.getItemBySlot(EquipmentSlot.HEAD),
+                client.player.getItemBySlot(EquipmentSlot.CHEST),
+                client.player.getItemBySlot(EquipmentSlot.LEGS),
+                client.player.getItemBySlot(EquipmentSlot.FEET)
+        };
+
+        boolean hasArmor = false;
+        for (ItemStack stack : armor) {
             if (!stack.isEmpty()) {
-                count++;
+                hasArmor = true;
+                break;
             }
         }
-
-        if (count == 0) {
+        if (!hasArmor) {
             return;
         }
 
         int slotSize = 20;
-        int totalWidth = count * slotSize + 10;
+        int totalWidth = armor.length * slotSize + 8;
         int startX = (graphics.guiWidth() - totalWidth) / 2;
         int y = graphics.guiHeight() - 48;
-        graphics.fill(startX - 4, y - 4, startX + totalWidth - 6, y + 22, 0xCC0B0812);
+        graphics.fill(startX - 4, y - 4, startX + totalWidth - 4, y + 22, 0xCC0B0812);
 
-        int rendered = 0;
-        for (var stack : client.player.getArmorSlots()) {
+        for (int index = 0; index < armor.length; index++) {
+            ItemStack stack = armor[index];
+            int x = startX + index * slotSize;
+            graphics.fill(x + 1, y + 1, x + 19, y + 19, 0x77302431);
             if (stack.isEmpty()) {
                 continue;
             }
 
-            int x = startX + rendered * slotSize;
-            graphics.renderItem(stack, x, y);
+            graphics.renderItem(stack, x + 1, y + 1);
             if (stack.isDamageableItem()) {
                 int maxDamage = stack.getMaxDamage();
                 int remaining = Math.max(0, maxDamage - stack.getDamageValue());
                 int width = maxDamage == 0 ? 0 : Math.round(13.0F * remaining / maxDamage);
-                graphics.fill(x + 4, y + 17, x + 17, y + 19, 0xFF39232B);
+                graphics.fill(x + 3, y + 17, x + 16, y + 19, 0xFF39232B);
                 if (width > 0) {
-                    graphics.fill(x + 4, y + 17, x + 4 + width, y + 19, 0xFFFF4568);
+                    graphics.fill(x + 3, y + 17, x + 3 + width, y + 19, 0xFFFF4568);
                 }
             }
-            rendered++;
         }
     }
 
