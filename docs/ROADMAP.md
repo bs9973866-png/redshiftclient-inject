@@ -28,3 +28,9 @@
 
 ## Compatibility boundary
 The desktop overlay is independent of Minecraft mod loaders. It does not inject native code into the game, patch process memory, bypass anti-cheat, or conceal itself from ordinary capture tools.
+
+
+## Completed — Interface scaling
+- Added a 0.8×–1.3× overlay-wide UI scale control.
+- Persisted the selected scale in the local JSON profile.
+- Kept compatibility with older profiles through a default scale value.
