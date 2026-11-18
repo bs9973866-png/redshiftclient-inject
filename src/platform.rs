@@ -5,7 +5,7 @@ use windows_sys::Win32::{
     UI::{
         Input::KeyboardAndMouse::{GetAsyncKeyState, VK_RSHIFT},
         WindowsAndMessaging::{
-            EnumWindows, GetForegroundWindow, GetWindowRect, GetWindowTextW, IsWindowVisible,
+            EnumWindows, GetForegroundWindow, GetWindowRect, GetWindowTextW, IsIconic, IsWindowVisible,
         },
     },
 };
@@ -18,6 +18,7 @@ pub struct MinecraftWindowInfo {
     pub width: i32,
     pub height: i32,
     pub is_foreground: bool,
+    pub is_minimized: bool,
     pub work_left: i32,
     pub work_top: i32,
     pub work_right: i32,
@@ -83,6 +84,7 @@ pub fn find_minecraft_window() -> Option<MinecraftWindowInfo> {
         width: rect.right - rect.left,
         height: rect.bottom - rect.top,
         is_foreground: foreground == search.found,
+        is_minimized: unsafe { IsIconic(search.found) != 0 },
         work_left,
         work_top,
         work_right,
