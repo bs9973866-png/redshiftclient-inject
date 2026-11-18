@@ -41,3 +41,7 @@ See docs/ROADMAP.md for planned milestones.
 ### Interface scaling
 
 The Visual System tab includes a persistent interface scale control (0.8×–1.3×). The selected scale is saved in the local JSON profile and applied to the entire desktop overlay window.
+
+### Multi-monitor positioning
+
+When Minecraft is focused, the overlay follows the monitor containing the Minecraft window. Its panel position is clamped to that monitor's usable work area, keeping it away from the taskbar and preventing it from being placed beyond the screen edge. This uses desktop window geometry only; it does not read Minecraft's game state.
