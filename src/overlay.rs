@@ -1,5 +1,6 @@
-use std::sync::mpsc::Receiver;
+use std::{fs, path::PathBuf, sync::mpsc::Receiver};
 use eframe::egui::{self, Align, Color32, FontId, Layout, RichText, Stroke};
+use serde::{Deserialize, Serialize};
 use crate::platform;
 
 const BG: Color32 = Color32::from_rgb(13, 9, 20);
@@ -7,6 +8,46 @@ const CARD: Color32 = Color32::from_rgba_premultiplied(43, 28, 51, 220);
 const CRIMSON: Color32 = Color32::from_rgb(255, 55, 83);
 const TEXT: Color32 = Color32::from_rgb(249, 239, 246);
 const MUTED: Color32 = Color32::from_rgb(168, 151, 171);
+
+#[derive(Clone, Serialize, Deserialize)]
+struct OverlayProfile {
+    opacity: f32,
+    accent_glow: bool,
+    follow_game_window: bool,
+    show_fps_widget: bool,
+    show_status_widget: bool,
+    fps_position: [f32; 2],
+    status_position: [f32; 2],
+}
+
+impl Default for OverlayProfile {
+    fn default() -> Self {
+        Self {
+            opacity: 0.94,
+            accent_glow: true,
+            follow_game_window: true,
+            show_fps_widget: true,
+            show_status_widget: true,
+            fps_position: [370.0, 155.0],
+            status_position: [370.0, 220.0],
+        }
+    }
+}
+
+fn profile_path() -> PathBuf {
+    let mut path = std::env::var_os("APPDATA")
+        .map(PathBuf::from)
+        .unwrap_or_else(std::env::temp_dir);
+    path.push("REDSHIFT");
+    path.push("profiles");
+    path.push("default.json");
+    path
+}
+
+fn read_profile() -> Option<OverlayProfile> {
+    let raw = fs::read_to_string(profile_path()).ok()?;
+    serde_json::from_str(&raw).ok()
+}
 
 pub struct RedshiftOverlay {
     hotkey_rx: Receiver<()>,
@@ -18,25 +59,93 @@ pub struct RedshiftOverlay {
     opacity: f32,
     accent_glow: bool,
     show_fps_widget: bool,
-    show_crosshair_widget: bool,
     show_status_widget: bool,
+    show_crosshair_widget: bool,
+    fps_position: egui::Pos2,
+    status_position: egui::Pos2,
+    profile_status: String,
 }
 
 impl RedshiftOverlay {
     pub fn new(hotkey_rx: Receiver<()>) -> Self {
-        Self { hotkey_rx, menu_open: true, selected_tab: 0, minecraft_window: None, follow_game_window: true, last_follow_position: None,
-            opacity: 0.94, accent_glow: true, show_fps_widget: false,
-            show_crosshair_widget: false, show_status_widget: true }
+        let profile = read_profile().unwrap_or_default();
+        Self {
+            hotkey_rx,
+            menu_open: true,
+            selected_tab: 0,
+            minecraft_window: None,
+            follow_game_window: profile.follow_game_window,
+            last_follow_position: None,
+            opacity: profile.opacity,
+            accent_glow: profile.accent_glow,
+            show_fps_widget: profile.show_fps_widget,
+            show_status_widget: profile.show_status_widget,
+            show_crosshair_widget: false,
+            fps_position: egui::pos2(profile.fps_position[0], profile.fps_position[1]),
+            status_position: egui::pos2(profile.status_position[0], profile.status_position[1]),
+            profile_status: "Default profile loaded when available".into(),
+        }
+    }
+
+    fn profile(&self) -> OverlayProfile {
+        OverlayProfile {
+            opacity: self.opacity,
+            accent_glow: self.accent_glow,
+            follow_game_window: self.follow_game_window,
+            show_fps_widget: self.show_fps_widget,
+            show_status_widget: self.show_status_widget,
+            fps_position: [self.fps_position.x, self.fps_position.y],
+            status_position: [self.status_position.x, self.status_position.y],
+        }
+    }
+
+    fn save_profile(&mut self) {
+        let path = profile_path();
+        let result = (|| -> Result<(), String> {
+            let parent = path.parent().ok_or("Profile folder is unavailable")?;
+            fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+            let json = serde_json::to_string_pretty(&self.profile()).map_err(|e| e.to_string())?;
+            fs::write(&path, json).map_err(|e| e.to_string())
+        })();
+        self.profile_status = match result {
+            Ok(()) => format!("Saved: {}", path.display()),
+            Err(error) => format!("Could not save profile: {error}"),
+        };
+    }
+
+    fn load_profile(&mut self) {
+        if let Some(profile) = read_profile() {
+            self.apply_profile(profile);
+            self.profile_status = "Profile loaded".into();
+        } else {
+            self.profile_status = "No saved profile found yet".into();
+        }
+    }
+
+    fn apply_profile(&mut self, profile: OverlayProfile) {
+        self.opacity = profile.opacity.clamp(0.55, 1.0);
+        self.accent_glow = profile.accent_glow;
+        self.follow_game_window = profile.follow_game_window;
+        self.show_fps_widget = profile.show_fps_widget;
+        self.show_status_widget = profile.show_status_widget;
+        self.fps_position = egui::pos2(profile.fps_position[0], profile.fps_position[1]);
+        self.status_position = egui::pos2(profile.status_position[0], profile.status_position[1]);
     }
 
     fn poll(&mut self, ctx: &egui::Context) {
-        while self.hotkey_rx.try_recv().is_ok() { self.menu_open = !self.menu_open; }
+        while self.hotkey_rx.try_recv().is_ok() {
+            self.menu_open = !self.menu_open;
+        }
         self.minecraft_window = platform::find_minecraft_window();
         if self.follow_game_window {
-            if let Some(game) = self.minecraft_window.as_ref().filter(|game| game.is_foreground && game.width > 0 && game.height > 0) {
+            if let Some(game) = self.minecraft_window.as_ref()
+                .filter(|game| game.is_foreground && game.width > 0 && game.height > 0)
+            {
                 let target = (game.left + 24, game.top + 24);
                 if self.last_follow_position != Some(target) {
-                    ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(egui::pos2(target.0 as f32, target.1 as f32)));
+                    ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(
+                        egui::pos2(target.0 as f32, target.1 as f32),
+                    ));
                     self.last_follow_position = Some(target);
                 }
             }
@@ -53,26 +162,82 @@ impl RedshiftOverlay {
                     ui.label(RichText::new(title).color(TEXT).strong());
                     ui.label(RichText::new(subtitle).size(11.0).color(MUTED));
                 });
-                ui.with_layout(Layout::right_to_left(Align::Center), |ui| { ui.toggle_value(enabled, ""); });
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    ui.toggle_value(enabled, "");
+                });
             }));
+    }
+
+    fn draw_hud_preview(&mut self, ctx: &egui::Context) {
+        if self.show_fps_widget {
+            let area = egui::Area::new(egui::Id::new("redshift-hud-fps"))
+                .default_pos(self.fps_position)
+                .movable(true)
+                .constrain(true)
+                .show(ctx, |ui| {
+                    egui::Frame::new().fill(CARD)
+                        .stroke(Stroke::new(1.0, CRIMSON))
+                        .corner_radius(egui::CornerRadius::same(10))
+                        .inner_margin(egui::Margin::symmetric(12, 8))
+                        .show(ui, |ui| {
+                            ui.label(RichText::new("FPS  •  PREVIEW").strong().color(TEXT));
+                            ui.label(RichText::new("Game data not connected").size(10.0).color(MUTED));
+                        });
+                });
+            self.fps_position = area.response.rect.min;
+        }
+
+        if self.show_status_widget {
+            let area = egui::Area::new(egui::Id::new("redshift-hud-status"))
+                .default_pos(self.status_position)
+                .movable(true)
+                .constrain(true)
+                .show(ctx, |ui| {
+                    egui::Frame::new().fill(CARD)
+                        .stroke(Stroke::new(1.0, Color32::from_rgba_unmultiplied(255, 105, 132, 90)))
+                        .corner_radius(egui::CornerRadius::same(10))
+                        .inner_margin(egui::Margin::symmetric(12, 8))
+                        .show(ui, |ui| {
+                            ui.label(RichText::new("REDSHIFT").strong().color(TEXT));
+                            ui.label(RichText::new(if self.minecraft_window.is_some() {
+                                "Minecraft detected"
+                            } else {
+                                "Waiting for Minecraft"
+                            }).size(10.0).color(MUTED));
+                        });
+                });
+            self.status_position = area.response.rect.min;
+        }
     }
 
     fn content(&mut self, ui: &mut egui::Ui) {
         match self.selected_tab {
-            0 | 1 => {
-                ui.label(RichText::new(if self.selected_tab == 0 { "Welcome back." } else { "HUD WORKSPACE" }).size(19.0).strong().color(TEXT));
-                ui.label(RichText::new("Independent desktop widgets. Game telemetry is not connected yet.").color(MUTED));
+            0 => {
+                ui.label(RichText::new("Welcome back.").size(19.0).strong().color(TEXT));
+                ui.label(RichText::new("Standalone overlay • no Minecraft mod loader required").color(MUTED));
                 if let Some(game) = self.minecraft_window.as_ref() {
                     ui.add_space(8.0);
                     ui.label(RichText::new(format!("WINDOW  •  {} × {}", game.width, game.height)).size(10.0).color(MUTED));
-                    ui.label(RichText::new(game.title.chars().take(64).collect::<String>()).size(11.0).color(TEXT));
+                    ui.label(RichText::new(game.title.chars().take(52).collect::<String>()).size(11.0).color(TEXT));
                 }
                 ui.add_space(14.0);
-                Self::card(ui, "Status widget", "Local overlay status panel", &mut self.show_status_widget);
+                Self::card(ui, "Status widget", "Draggable desktop HUD preview", &mut self.show_status_widget);
                 ui.add_space(8.0);
-                Self::card(ui, "FPS widget (preview)", "Preview only — no game telemetry source", &mut self.show_fps_widget);
+                Self::card(ui, "FPS widget", "Visual preview only — not real game FPS", &mut self.show_fps_widget);
+            }
+            1 => {
+                ui.label(RichText::new("HUD EDITOR").size(19.0).strong().color(TEXT));
+                ui.label(RichText::new("Drag the floating widgets to arrange your desktop overlay.").color(MUTED));
                 ui.add_space(8.0);
-                Self::card(ui, "Crosshair widget (preview)", "Desktop overlay element, not drawn into Minecraft", &mut self.show_crosshair_widget);
+                ui.checkbox(&mut self.show_status_widget, "Show status widget");
+                ui.checkbox(&mut self.show_fps_widget, "Show FPS preview widget");
+                ui.checkbox(&mut self.show_crosshair_widget, "Show crosshair preview (not in-game)");
+                ui.add_space(8.0);
+                if ui.button("Reset widget positions").clicked() {
+                    self.fps_position = egui::pos2(370.0, 155.0);
+                    self.status_position = egui::pos2(370.0, 220.0);
+                }
+                ui.label(RichText::new("Widgets are external desktop overlays; game telemetry is not connected.").size(10.0).color(MUTED));
             }
             2 => {
                 ui.label(RichText::new("VISUAL SYSTEM").size(19.0).strong().color(TEXT));
@@ -82,13 +247,29 @@ impl RedshiftOverlay {
                 ui.add_space(12.0);
                 ui.label(RichText::new("Panel opacity").color(TEXT));
                 ui.add(egui::Slider::new(&mut self.opacity, 0.55..=1.0));
-                egui::Frame::new().fill(Color32::from_rgba_unmultiplied(65, 35, 66, (self.opacity * 230.0) as u8))
-                    .stroke(Stroke::new(1.0, CRIMSON)).corner_radius(14).inner_margin(18.0)
-                    .show(ui, |ui| { ui.label(RichText::new("LIQUID GLASS").strong().color(TEXT)); ui.label(RichText::new("Layered translucent surface").color(MUTED)); });
+                egui::Frame::new()
+                    .fill(Color32::from_rgba_unmultiplied(65, 35, 66, (self.opacity * 230.0) as u8))
+                    .stroke(Stroke::new(1.0, CRIMSON))
+                    .corner_radius(14)
+                    .inner_margin(18.0)
+                    .show(ui, |ui| {
+                        ui.label(RichText::new("LIQUID GLASS").strong().color(TEXT));
+                        ui.label(RichText::new("Layered translucent surface").color(MUTED));
+                    });
             }
             3 => {
                 ui.label(RichText::new("PROFILES").size(19.0).strong().color(TEXT));
-                ui.label(RichText::new("Persistent profile storage is planned for the next milestone.").color(MUTED));
+                ui.label(RichText::new("One local JSON profile is stored on this PC.").color(MUTED));
+                ui.add_space(12.0);
+                if ui.button("Save current profile").clicked() {
+                    self.save_profile();
+                }
+                if ui.button("Load saved profile").clicked() {
+                    self.load_profile();
+                }
+                ui.add_space(8.0);
+                ui.label(RichText::new(&self.profile_status).size(10.0).color(MUTED));
+                ui.label(RichText::new(profile_path().display().to_string()).size(9.0).color(MUTED));
             }
             _ => {
                 ui.label(RichText::new("SETTINGS").size(19.0).strong().color(TEXT));
@@ -108,14 +289,18 @@ impl eframe::App for RedshiftOverlay {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll(ctx);
         if !self.menu_open {
-            egui::CentralPanel::default().frame(egui::Frame::NONE).show(ctx, |ui| { ui.allocate_space(egui::vec2(1.0, 1.0)); });
+            egui::CentralPanel::default().frame(egui::Frame::NONE).show(ctx, |ui| {
+                ui.allocate_space(egui::vec2(1.0, 1.0));
+            });
             return;
         }
+
         egui::CentralPanel::default().frame(
             egui::Frame::new()
                 .fill(Color32::from_rgba_unmultiplied(BG.r(), BG.g(), BG.b(), (255.0 * self.opacity) as u8))
                 .stroke(Stroke::new(1.0, Color32::from_rgba_unmultiplied(255, 83, 111, 100)))
-                .corner_radius(egui::CornerRadius::same(16)).inner_margin(16.0)
+                .corner_radius(egui::CornerRadius::same(16))
+                .inner_margin(16.0)
         ).show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
@@ -123,10 +308,16 @@ impl eframe::App for RedshiftOverlay {
                     ui.label(RichText::new("INJECT CLIENT / EXTERNAL OVERLAY").size(9.0).color(MUTED));
                 });
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui.button(RichText::new("×").size(20.0).color(TEXT)).clicked() { self.menu_open = false; }
+                    if ui.button(RichText::new("×").size(20.0).color(TEXT)).clicked() {
+                        self.menu_open = false;
+                    }
                     let detected = self.minecraft_window.is_some();
                     let status = if detected { "MINECRAFT DETECTED" } else { "WAITING FOR GAME" };
-                    ui.label(RichText::new(status).size(9.0).color(if detected { Color32::from_rgb(108, 226, 166) } else { MUTED }));
+                    ui.label(RichText::new(status).size(9.0).color(if detected {
+                        Color32::from_rgb(108, 226, 166)
+                    } else {
+                        MUTED
+                    }));
                 });
             });
             ui.add_space(8.0);
@@ -136,19 +327,36 @@ impl eframe::App for RedshiftOverlay {
                 ui.vertical(|ui| {
                     for (i, name) in ["Dashboard", "HUD", "Visuals", "Profiles", "Settings"].iter().enumerate() {
                         let selected = self.selected_tab == i;
-                        let b = egui::Button::new(RichText::new(*name).color(if selected { TEXT } else { MUTED }).strong())
-                            .fill(if selected { Color32::from_rgba_unmultiplied(255, 55, 83, 48) } else { Color32::TRANSPARENT })
-                            .stroke(if selected { Stroke::new(1.0, CRIMSON) } else { Stroke::NONE }).corner_radius(8);
-                        if ui.add_sized([118.0, 34.0], b).clicked() { self.selected_tab = i; }
+                        let button = egui::Button::new(
+                            RichText::new(*name).color(if selected { TEXT } else { MUTED }).strong()
+                        )
+                        .fill(if selected {
+                            Color32::from_rgba_unmultiplied(255, 55, 83, 48)
+                        } else {
+                            Color32::TRANSPARENT
+                        })
+                        .stroke(if selected { Stroke::new(1.0, CRIMSON) } else { Stroke::NONE })
+                        .corner_radius(8);
+                        if ui.add_sized([118.0, 34.0], button).clicked() {
+                            self.selected_tab = i;
+                        }
                     }
                 });
                 ui.separator();
-                ui.vertical(|ui| { ui.set_min_width(ui.available_width()); self.content(ui); });
+                ui.vertical(|ui| {
+                    ui.set_min_width(ui.available_width());
+                    self.content(ui);
+                });
             });
             ui.with_layout(Layout::bottom_up(Align::LEFT), |ui| {
-                ui.label(RichText::new("REDSHIFT • BUILD 0.1.0 • RIGHT SHIFT TO TOGGLE").size(9.0).color(MUTED));
+                ui.label(RichText::new("REDSHIFT • BUILD 0.2.0 • RIGHT SHIFT TO TOGGLE").size(9.0).color(MUTED));
             });
         });
+
+        if self.selected_tab == 1 {
+            self.draw_hud_preview(ctx);
+        }
+
         if self.accent_glow {
             let rect = ctx.available_rect();
             ctx.layer_painter(egui::LayerId::new(egui::Order::Foreground, egui::Id::new("redshift-glow")))
