@@ -20,6 +20,7 @@ public final class ClickGuiScreen extends Screen {
     private ModuleCategory selectedCategory = ModuleCategory.COMBAT;
     private boolean settingsOpen;
     private boolean waitingForGuiKey;
+    private String waitingForModuleKey;
 
     public ClickGuiScreen() {
         super(Component.literal("REDSHIFT CLIENT"));
@@ -87,7 +88,7 @@ public final class ClickGuiScreen extends Screen {
             renderSettings(graphics, mouseX, mouseY, x, y, contentX);
         } else {
             graphics.drawString(this.font, selectedCategory.title().toUpperCase(), contentX, y + 77, 0xFFFFFFFF);
-            graphics.drawString(this.font, "MODULES  /  CLICK A CARD TO TOGGLE", contentX, y + 94, 0xFF9C899F);
+            graphics.drawString(this.font, "LEFT CLICK  /  TOGGLE     RIGHT CLICK  /  BIND", contentX, y + 94, 0xFF9C899F);
 
         List<ClientModule> modules = ModuleManager.byCategory(selectedCategory);
         if (modules.isEmpty()) {
@@ -117,6 +118,8 @@ public final class ClickGuiScreen extends Screen {
 
             graphics.drawString(this.font, module.name(), cardX + 11, cardY + 11, 0xFFF8F1F5);
             graphics.drawString(this.font, module.description(), cardX + 11, cardY + 29, 0xFFAA9CAE);
+            String bindLabel = moduleKeyName(module);
+            graphics.drawString(this.font, "KEY  " + bindLabel, cardX + 11, cardY + 49, 0xFFFF8BA2);
 
             String status = module.isEnabled() ? "ON" : "OFF";
             int statusColor = module.isEnabled() ? 0xFFFF5578 : 0xFF766B7A;
@@ -186,11 +189,41 @@ public final class ClickGuiScreen extends Screen {
     }
 
     public boolean isCapturingGuiKey() {
-        return waitingForGuiKey;
+        return waitingForGuiKey || waitingForModuleKey != null;
+    }
+
+    private static String moduleKeyName(ClientModule module) {
+        int key = module.keybind();
+        if (key == GLFW.GLFW_KEY_UNKNOWN) return "NONE";
+        if (key == GLFW.GLFW_KEY_RIGHT_SHIFT) return "RSHIFT";
+        if (key == GLFW.GLFW_KEY_LEFT_SHIFT) return "LSHIFT";
+        if (key == GLFW.GLFW_KEY_SPACE) return "SPACE";
+        if (key >= GLFW.GLFW_KEY_A && key <= GLFW.GLFW_KEY_Z) {
+            return String.valueOf((char) ('A' + key - GLFW.GLFW_KEY_A));
+        }
+        String name = GLFW.glfwGetKeyName(key, 0);
+        return name == null ? "KEY " + key : name.toUpperCase(java.util.Locale.ROOT);
     }
 
     @Override
     public boolean keyPressed(KeyEvent input) {
+        if (waitingForModuleKey != null) {
+            int key = input.key();
+            if (key == GLFW.GLFW_KEY_ESCAPE) {
+                waitingForModuleKey = null;
+                return true;
+            }
+            if (key != GLFW.GLFW_KEY_UNKNOWN) {
+                ClientModule module = ModuleManager.get(waitingForModuleKey);
+                if (module != null) {
+                    module.setKeybind(key);
+                    ModuleManager.save();
+                }
+            }
+            waitingForModuleKey = null;
+            return true;
+        }
+
         if (waitingForGuiKey) {
             int key = input.key();
             if (key == GLFW.GLFW_KEY_ESCAPE) {
@@ -208,7 +241,7 @@ public final class ClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (click.button() != 0) {
+        if (click.button() != 0 && click.button() != 1) {
             return super.mouseClicked(click, doubled);
         }
 
@@ -256,6 +289,21 @@ public final class ClickGuiScreen extends Screen {
         int gapY = 12;
         int cardsStartY = y + 124;
         List<ClientModule> modules = ModuleManager.byCategory(selectedCategory);
+
+        if (click.button() == 1) {
+            for (int index = 0; index < modules.size(); index++) {
+                int column = index % 2;
+                int row = index / 2;
+                int cardX = contentX + column * (cardWidth + gapX);
+                int cardY = cardsStartY + row * (cardHeight + gapY);
+                if (inside(mouseX, mouseY, cardX, cardY, cardX + cardWidth, cardY + cardHeight)) {
+                    waitingForGuiKey = false;
+                    waitingForModuleKey = modules.get(index).id();
+                    return true;
+                }
+            }
+            return super.mouseClicked(click, doubled);
+        }
 
         for (int index = 0; index < modules.size(); index++) {
             int column = index % 2;
