@@ -24,6 +24,8 @@ struct OverlayProfile {
     crosshair_position: [f32; 2],
     #[serde(default)]
     show_crosshair_widget: bool,
+    #[serde(default)]
+    widgets_only_with_game: bool,
 }
 
 fn default_crosshair_position() -> [f32; 2] { [370.0, 285.0] }
@@ -42,6 +44,7 @@ impl Default for OverlayProfile {
             status_position: [370.0, 220.0],
             crosshair_position: [370.0, 285.0],
             show_crosshair_widget: false,
+            widgets_only_with_game: false,
         }
     }
 }
@@ -74,6 +77,7 @@ pub struct RedshiftOverlay {
     show_fps_widget: bool,
     show_status_widget: bool,
     show_crosshair_widget: bool,
+    widgets_only_with_game: bool,
     fps_position: egui::Pos2,
     status_position: egui::Pos2,
     crosshair_position: egui::Pos2,
@@ -96,6 +100,7 @@ impl RedshiftOverlay {
             show_fps_widget: profile.show_fps_widget,
             show_status_widget: profile.show_status_widget,
             show_crosshair_widget: profile.show_crosshair_widget,
+            widgets_only_with_game: profile.widgets_only_with_game,
             fps_position: egui::pos2(profile.fps_position[0], profile.fps_position[1]),
             status_position: egui::pos2(profile.status_position[0], profile.status_position[1]),
             crosshair_position: egui::pos2(profile.crosshair_position[0], profile.crosshair_position[1]),
@@ -115,6 +120,7 @@ impl RedshiftOverlay {
             status_position: [self.status_position.x, self.status_position.y],
             crosshair_position: [self.crosshair_position.x, self.crosshair_position.y],
             show_crosshair_widget: self.show_crosshair_widget,
+            widgets_only_with_game: self.widgets_only_with_game,
         }
     }
 
@@ -152,6 +158,7 @@ impl RedshiftOverlay {
         self.status_position = egui::pos2(profile.status_position[0], profile.status_position[1]);
         self.crosshair_position = egui::pos2(profile.crosshair_position[0], profile.crosshair_position[1]);
         self.show_crosshair_widget = profile.show_crosshair_widget;
+        self.widgets_only_with_game = profile.widgets_only_with_game;
     }
 
     fn poll(&mut self, ctx: &egui::Context) {
@@ -191,6 +198,12 @@ impl RedshiftOverlay {
     }
 
     fn draw_hud_preview(&mut self, ctx: &egui::Context) {
+        if self.widgets_only_with_game
+            && !self.minecraft_window.as_ref().is_some_and(|game| game.is_foreground)
+        {
+            return;
+        }
+
         if self.show_fps_widget {
             let area = egui::Area::new(egui::Id::new("redshift-hud-fps"))
                 .default_pos(self.fps_position)
@@ -331,6 +344,9 @@ impl RedshiftOverlay {
                 ui.add_space(10.0);
                 ui.checkbox(&mut self.follow_game_window, "Follow Minecraft window");
                 ui.label(RichText::new("Moves the panel near the game when Minecraft is focused.").size(11.0).color(MUTED));
+                ui.add_space(8.0);
+                ui.checkbox(&mut self.widgets_only_with_game, "Show HUD widgets only while Minecraft is focused");
+                ui.label(RichText::new("When enabled, desktop preview widgets disappear while another app is active.").size(10.0).color(MUTED));
                 ui.add_space(10.0);
                 ui.label(RichText::new("Transparent always-on-top window").color(MUTED));
                 ui.label(RichText::new("Visible to normal screen capture").color(MUTED));
