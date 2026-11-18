@@ -15,7 +15,8 @@
 - [x] Optional automatic menu hide on focus loss with manual hotkey override
 - [x] Detect minimized Minecraft windows and optionally hide the overlay until restored
 - [ ] Reliable show / hide and focus behavior
-- [ ] Multi-monitor and DPI scaling support
+- [x] Per-monitor DPI awareness and DPI-aware multi-monitor positioning
+- [ ] Validate mixed-DPI behavior on physical Windows displays
 
 ## 0.3 — HUD and customization
 - [ ] Draggable desktop HUD widgets
@@ -42,4 +43,12 @@ The desktop overlay is independent of Minecraft mod loaders. It does not inject 
 - [x] Detect the monitor containing the Minecraft window.
 - [x] Read that monitor's usable work area (excluding the taskbar).
 - [x] Clamp the followed overlay panel position to the same monitor's work area.
-- [ ] Validate mixed-DPI behavior on Windows with multiple monitors.
+
+
+## DPI-aware multi-monitor implementation
+- [x] Request Per-Monitor V2 DPI awareness before creating the native app window, with a Per-Monitor V1 fallback.
+- [x] Read the Minecraft window's effective DPI.
+- [x] Convert physical desktop coordinates to egui logical viewport positions.
+- [x] Clamp the panel using target-monitor DPI-adjusted dimensions and its usable work area.
+- [x] Preserve native DPI scale while applying the app's independent UI zoom.
+- [ ] Validate on physical Windows 10/11 systems with mixed monitor scale factors.
