@@ -1,11 +1,11 @@
 use std::{sync::mpsc::Sender, thread, time::Duration};
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, BOOL, RECT},
+    Graphics::Gdi::{GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST},
     UI::{
         Input::KeyboardAndMouse::{GetAsyncKeyState, VK_RSHIFT},
         WindowsAndMessaging::{
             EnumWindows, GetForegroundWindow, GetWindowRect, GetWindowTextW, IsWindowVisible,
-            GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
         },
     },
 };
