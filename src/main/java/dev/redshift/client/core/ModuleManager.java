@@ -2,6 +2,7 @@ package dev.redshift.client.core;
 
 import dev.redshift.client.modules.ToggleSprintModule;
 import net.minecraft.client.Minecraft;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,6 +14,7 @@ public final class ModuleManager {
     private static final List<ClientModule> MODULES = new ArrayList<>();
     private static final Map<String, ClientModule> BY_ID = new LinkedHashMap<>();
     private static boolean initialized;
+    private static final Map<String, Boolean> KEY_WAS_DOWN = new LinkedHashMap<>();
 
     private ModuleManager() {
     }
@@ -88,8 +90,10 @@ public final class ModuleManager {
         ) {});
 
         Map<String, Boolean> saved = ClientConfig.load();
+        Map<String, Integer> savedKeybinds = ClientConfig.loadModuleKeybinds();
         for (ClientModule module : MODULES) {
             module.setEnabled(saved.getOrDefault(module.id(), false));
+            module.setKeybind(savedKeybinds.getOrDefault(module.id(), GLFW.GLFW_KEY_UNKNOWN));
         }
 
         initialized = true;
@@ -129,13 +133,42 @@ public final class ModuleManager {
                 module.onTick(client);
             }
         }
+
+        if (client.screen == null) {
+            long window = client.getWindow().handle();
+            boolean changed = false;
+            for (ClientModule module : MODULES) {
+                int key = module.keybind();
+                if (key == GLFW.GLFW_KEY_UNKNOWN) {
+                    KEY_WAS_DOWN.put(module.id(), false);
+                    continue;
+                }
+
+                boolean down = GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS;
+                boolean wasDown = KEY_WAS_DOWN.getOrDefault(module.id(), false);
+                if (down && !wasDown) {
+                    module.toggle();
+                    changed = true;
+                }
+                KEY_WAS_DOWN.put(module.id(), down);
+            }
+            if (changed) {
+                save();
+            }
+        } else {
+            KEY_WAS_DOWN.replaceAll((id, wasDown) -> false);
+        }
     }
 
     public static void save() {
         Map<String, Boolean> state = new LinkedHashMap<>();
+        Map<String, Integer> keybinds = new LinkedHashMap<>();
         for (ClientModule module : MODULES) {
             state.put(module.id(), module.isEnabled());
+            if (module.keybind() != GLFW.GLFW_KEY_UNKNOWN) {
+                keybinds.put(module.id(), module.keybind());
+            }
         }
-        ClientConfig.save(state);
+        ClientConfig.save(state, keybinds);
     }
 }
