@@ -74,6 +74,13 @@ public final class ModuleManager {
         ) {});
 
         register(new ClientModule(
+                "held_item",
+                "Held Item",
+                "Displays your selected item and its durability.",
+                ModuleCategory.HUD
+        ) {});
+
+        register(new ClientModule(
                 "world_clock",
                 "World Clock",
                 "Displays the current in-game day time.",
