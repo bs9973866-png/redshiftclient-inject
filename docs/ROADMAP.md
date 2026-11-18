@@ -11,7 +11,8 @@
 ## 0.2 — Overlay behavior
 - [x] Track Minecraft window position and size
 - [x] Optional follow mode while Minecraft is foreground
-- [ ] Show overlay only while a Minecraft window is active (user setting)
+- [x] Optional HUD widgets only while Minecraft is focused
+- [x] Optional automatic menu hide on focus loss with manual hotkey override
 - [ ] Reliable show / hide and focus behavior
 - [ ] Multi-monitor and DPI scaling support
 
