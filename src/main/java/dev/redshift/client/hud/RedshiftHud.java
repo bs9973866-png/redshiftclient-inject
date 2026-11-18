@@ -81,6 +81,10 @@ public final class RedshiftHud {
         if (ModuleManager.isEnabled("armor_status")) {
             renderArmor(graphics, client);
         }
+
+        if (ModuleManager.isEnabled("held_item")) {
+            renderHeldItem(graphics, client);
+        }
     }
 
     private static void renderKeystrokes(GuiGraphics graphics, Minecraft client) {
@@ -108,6 +112,27 @@ public final class RedshiftHud {
         graphics.fill(x, y, x + 22, y + 1, border);
         int textX = x + (22 - client.font.width(label)) / 2;
         graphics.drawString(client.font, label, textX, y + 6, 0xFFF8F1F5);
+    }
+
+    private static void renderHeldItem(GuiGraphics graphics, Minecraft client) {
+        ItemStack stack = client.player.getMainHandItem();
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        int x = 10;
+        int y = graphics.guiHeight() - 42;
+        int width = Math.max(116, client.font.width(stack.getHoverName()) + 42);
+        graphics.fill(x, y, x + width, y + 30, 0xCC0B0812);
+        graphics.fill(x, y, x + 2, y + 30, 0xFFFF4568);
+        graphics.renderItem(stack, x + 6, y + 6);
+        graphics.drawString(client.font, stack.getHoverName(), x + 29, y + 7, 0xFFF8F1F5);
+        if (stack.isDamageableItem()) {
+            int maxDamage = stack.getMaxDamage();
+            int remaining = Math.max(0, maxDamage - stack.getDamageValue());
+            String durability = remaining + " / " + maxDamage;
+            graphics.drawString(client.font, durability, x + 29, y + 18, 0xFFFF8BA2);
+        }
     }
 
     private static void renderArmor(GuiGraphics graphics, Minecraft client) {
