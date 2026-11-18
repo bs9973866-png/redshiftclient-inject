@@ -17,20 +17,26 @@ public final class RedshiftHud {
             return;
         }
 
-        int x = 10;
-        int y = 10;
+        int screenWidth = graphics.guiWidth();
+        int screenHeight = graphics.guiHeight();
 
         if (ModuleManager.isEnabled("watermark")) {
+            int x = HudLayout.x("watermark", screenWidth);
+            int y = HudLayout.y("watermark", screenHeight);
             graphics.fill(x, y, x + 124, y + 25, 0xCC0B0812);
             graphics.fill(x, y, x + 3, y + 25, 0xFFFF355D);
             graphics.drawString(client.font, "REDSHIFT", x + 10, y + 8, 0xFFFFFFFF);
-            y += 31;
         }
 
         if (ModuleManager.isEnabled("fps_counter")) {
             String fps = "FPS  " + client.getFps();
-            drawInfoCard(graphics, client, x, y, fps);
-            y += 23;
+            drawInfoCard(
+                    graphics,
+                    client,
+                    HudLayout.x("fps_counter", screenWidth),
+                    HudLayout.y("fps_counter", screenHeight),
+                    fps
+            );
         }
 
         if (ModuleManager.isEnabled("coordinates")) {
@@ -41,20 +47,28 @@ public final class RedshiftHud {
                     client.player.getBlockY(),
                     client.player.getBlockZ()
             );
-            drawInfoCard(graphics, client, x, y, coordinates);
+            drawInfoCard(
+                    graphics,
+                    client,
+                    HudLayout.x("coordinates", screenWidth),
+                    HudLayout.y("coordinates", screenHeight),
+                    coordinates
+            );
         }
 
         if (ModuleManager.isEnabled("attack_cooldown")) {
             float progress = client.player.getAttackStrengthScale(0.0F);
-            int barX = graphics.guiWidth() / 2 - 36;
-            int barY = graphics.guiHeight() / 2 + 18;
+            int barX = HudLayout.x("attack_cooldown", screenWidth);
+            int barY = HudLayout.y("attack_cooldown", screenHeight);
             graphics.fill(barX, barY, barX + 72, barY + 5, 0xA9000000);
             graphics.fill(barX, barY, barX + Math.round(72 * progress), barY + 5, 0xFFFF355D);
         }
 
         if (ModuleManager.isEnabled("crimson_crosshair")) {
-            int centerX = graphics.guiWidth() / 2;
-            int centerY = graphics.guiHeight() / 2;
+            int crosshairX = HudLayout.x("crimson_crosshair", screenWidth);
+            int crosshairY = HudLayout.y("crimson_crosshair", screenHeight);
+            int centerX = crosshairX + 8;
+            int centerY = crosshairY + 8;
             graphics.fill(centerX - 1, centerY - 7, centerX + 1, centerY - 3, 0xFFFF355D);
             graphics.fill(centerX - 1, centerY + 3, centerX + 1, centerY + 7, 0xFFFF355D);
             graphics.fill(centerX - 7, centerY - 1, centerX - 3, centerY + 1, 0xFFFF355D);
@@ -68,8 +82,8 @@ public final class RedshiftHud {
             drawInfoCard(
                     graphics,
                     client,
-                    graphics.guiWidth() - 98,
-                    10,
+                    HudLayout.x("world_clock", screenWidth),
+                    HudLayout.y("world_clock", screenHeight),
                     String.format(java.util.Locale.ROOT, "TIME  %02d:%02d", hours, minutes)
             );
         }
@@ -88,8 +102,8 @@ public final class RedshiftHud {
     }
 
     private static void renderKeystrokes(GuiGraphics graphics, Minecraft client) {
-        int baseX = graphics.guiWidth() - 82;
-        int baseY = graphics.guiHeight() - 104;
+        int baseX = HudLayout.x("keystrokes", graphics.guiWidth());
+        int baseY = HudLayout.y("keystrokes", graphics.guiHeight());
         drawKey(graphics, client, "W", baseX + 24, baseY, client.options.keyUp.isDown());
         drawKey(graphics, client, "A", baseX, baseY + 24, client.options.keyLeft.isDown());
         drawKey(graphics, client, "S", baseX + 24, baseY + 24, client.options.keyDown.isDown());
@@ -120,8 +134,8 @@ public final class RedshiftHud {
             return;
         }
 
-        int x = 10;
-        int y = graphics.guiHeight() - 42;
+        int x = HudLayout.x("held_item", graphics.guiWidth());
+        int y = HudLayout.y("held_item", graphics.guiHeight());
         int width = Math.max(116, client.font.width(stack.getHoverName()) + 42);
         graphics.fill(x, y, x + width, y + 30, 0xCC0B0812);
         graphics.fill(x, y, x + 2, y + 30, 0xFFFF4568);
@@ -156,8 +170,8 @@ public final class RedshiftHud {
 
         int slotSize = 20;
         int totalWidth = armor.length * slotSize + 8;
-        int startX = (graphics.guiWidth() - totalWidth) / 2;
-        int y = graphics.guiHeight() - 48;
+        int startX = HudLayout.x("armor_status", graphics.guiWidth());
+        int y = HudLayout.y("armor_status", graphics.guiHeight());
         graphics.fill(startX - 4, y - 4, startX + totalWidth - 4, y + 22, 0xCC0B0812);
 
         for (int index = 0; index < armor.length; index++) {
