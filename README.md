@@ -9,13 +9,15 @@ This repository has been converted from the temporary Rust desktop-overlay exper
 - Minecraft Java 1.21.11
 - Fabric Loader 0.20.1
 - Fabric API 0.141.1+1.21.11
-- Java 21 and official Mojang mappings
-- Black / crimson in-game ClickGUI
-- Right Shift opens and closes the GUI
-- Categories: Combat, Visuals, Movement, HUD and World
-- Module enable / disable state is saved to config/redshift-client.json
+- Java 21 bytecode and official Mojang mappings (build runtime: JDK 25 for current Loom)
+- Black / crimson in-game ClickGUI with native Minecraft screen input
+- Right Shift opens and closes the GUI by default; the GUI key is configurable
+- Categories: Combat, Visuals, Movement, HUD and World, plus a Settings page
+- Search modules by name, description or ID within the selected category
+- Left-click toggles a module; right-click assigns an individual module keybind
+- Module states, module keybinds and GUI keybind are saved to `config/redshift-client.json`
 - HUD modules render inside the actual Minecraft HUD
-- Sprint Assist, Watermark, Coordinates, FPS Counter, Attack Cooldown, Crimson Crosshair and World Clock, Keystrokes and Armor Status
+- Modules: Sprint Assist, Watermark, Coordinates, FPS Counter, Keystrokes, Armor Status, Held Item, Attack Cooldown, Crimson Crosshair and World Clock
 
 ## Build
 
@@ -33,7 +35,10 @@ Install it by placing the JAR into the mods folder of a Minecraft 1.21.11 Fabric
 
 - Right Shift opens / closes REDSHIFT ClickGUI.
 - Click a category on the left to switch module groups.
-- Click a module card to enable or disable it.
+- Left-click a module card to enable or disable it.
+- Right-click a module card to assign a keybind; press Escape to cancel.
+- Use the search field above the cards to filter the selected category.
+- Open Settings to change the ClickGUI hotkey.
 
 ## Project direction
 
