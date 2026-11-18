@@ -35,7 +35,7 @@ public final class HudLayout {
             new Widget("watermark", "Watermark", 124, 25, 0.015F, 0.02F),
             new Widget("fps_counter", "FPS Counter", 122, 20, 0.015F, 0.085F),
             new Widget("coordinates", "Coordinates", 150, 20, 0.015F, 0.14F),
-            new Widget("held_item", "Held Item", 170, 30, 0.015F, 0.82F),
+            new Widget("held_item", "Held Item", 170, 30, 0.015F, 0.90F),
             new Widget("armor_status", "Armor Status", 100, 26, 0.44F, 0.90F),
             new Widget("keystrokes", "Keystrokes", 78, 68, 0.89F, 0.76F),
             new Widget("world_clock", "World Clock", 96, 20, 0.86F, 0.02F),
