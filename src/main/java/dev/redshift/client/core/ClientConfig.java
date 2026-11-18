@@ -64,11 +64,34 @@ public final class ClientConfig {
         return result;
     }
 
-    public static void save(Map<String, Boolean> enabledModules) {
+    public static Map<String, Integer> loadModuleKeybinds() {
+        Map<String, Integer> result = new LinkedHashMap<>();
+        JsonObject root = readRoot();
+        if (!root.has("moduleKeybinds") || !root.get("moduleKeybinds").isJsonObject()) {
+            return result;
+        }
+
+        for (Map.Entry<String, JsonElement> entry : root.getAsJsonObject("moduleKeybinds").entrySet()) {
+            if (entry.getValue().isJsonPrimitive()
+                    && entry.getValue().getAsJsonPrimitive().isNumber()) {
+                result.put(entry.getKey(), entry.getValue().getAsInt());
+            }
+        }
+        return result;
+    }
+
+    public static void save(
+            Map<String, Boolean> enabledModules,
+            Map<String, Integer> moduleKeybinds
+    ) {
         JsonObject root = readRoot();
         JsonObject modules = new JsonObject();
         enabledModules.forEach(modules::addProperty);
         root.add("modules", modules);
+
+        JsonObject keybinds = new JsonObject();
+        moduleKeybinds.forEach(keybinds::addProperty);
+        root.add("moduleKeybinds", keybinds);
         writeRoot(root);
     }
 
