@@ -91,9 +91,15 @@ public final class ModuleManager {
 
         Map<String, Boolean> saved = ClientConfig.load();
         Map<String, Integer> savedKeybinds = ClientConfig.loadModuleKeybinds();
+        Map<String, Map<String, Boolean>> savedSettings = ClientConfig.loadModuleSettings();
         for (ClientModule module : MODULES) {
             module.setEnabled(saved.getOrDefault(module.id(), false));
             module.setKeybind(savedKeybinds.getOrDefault(module.id(), GLFW.GLFW_KEY_UNKNOWN));
+
+            Map<String, Boolean> moduleSettings = savedSettings.getOrDefault(module.id(), Map.of());
+            for (BooleanSetting setting : module.booleanSettings()) {
+                setting.setEnabled(moduleSettings.getOrDefault(setting.id(), setting.isEnabled()));
+            }
         }
 
         initialized = true;
@@ -163,12 +169,22 @@ public final class ModuleManager {
     public static void save() {
         Map<String, Boolean> state = new LinkedHashMap<>();
         Map<String, Integer> keybinds = new LinkedHashMap<>();
+        Map<String, Map<String, Boolean>> settings = new LinkedHashMap<>();
+
         for (ClientModule module : MODULES) {
             state.put(module.id(), module.isEnabled());
             if (module.keybind() != GLFW.GLFW_KEY_UNKNOWN) {
                 keybinds.put(module.id(), module.keybind());
             }
+
+            Map<String, Boolean> moduleSettings = new LinkedHashMap<>();
+            for (BooleanSetting setting : module.booleanSettings()) {
+                moduleSettings.put(setting.id(), setting.isEnabled());
+            }
+            if (!moduleSettings.isEmpty()) {
+                settings.put(module.id(), moduleSettings);
+            }
         }
-        ClientConfig.save(state, keybinds);
+        ClientConfig.save(state, keybinds, settings);
     }
 }
