@@ -2,6 +2,11 @@ use std::{sync::mpsc::Sender, thread, time::Duration};
 use windows_sys::Win32::{
     Foundation::{HWND, LPARAM, BOOL, RECT},
     Graphics::Gdi::{GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST},
+    UI::HiDpi::{
+        GetDpiForWindow, SetProcessDpiAwarenessContext,
+        DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE,
+        DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
+    },
     UI::{
         Input::KeyboardAndMouse::{GetAsyncKeyState, VK_RSHIFT},
         WindowsAndMessaging::{
@@ -19,10 +24,23 @@ pub struct MinecraftWindowInfo {
     pub height: i32,
     pub is_foreground: bool,
     pub is_minimized: bool,
+    pub dpi: u32,
+    pub dpi_scale: f32,
     pub work_left: i32,
     pub work_top: i32,
     pub work_right: i32,
     pub work_bottom: i32,
+}
+
+pub fn enable_per_monitor_dpi_awareness() {
+    // Prefer Per-Monitor V2 (Windows 10 1703+), then fall back to V1.
+    // A false result can also mean a manifest or the windowing backend
+    // has already selected a process DPI mode.
+    unsafe {
+        if SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) == 0 {
+            let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+        }
+    }
 }
 
 pub fn start_hotkey_listener(sender: Sender<()>) {
@@ -77,6 +95,8 @@ pub fn find_minecraft_window() -> Option<MinecraftWindowInfo> {
     } else {
         (rect.left, rect.top, rect.right, rect.bottom)
     };
+    let dpi = unsafe { GetDpiForWindow(search.found) };
+    let dpi = if dpi == 0 { 96 } else { dpi };
     Some(MinecraftWindowInfo {
         title: window_title(search.found),
         left: rect.left,
@@ -85,6 +105,8 @@ pub fn find_minecraft_window() -> Option<MinecraftWindowInfo> {
         height: rect.bottom - rect.top,
         is_foreground: foreground == search.found,
         is_minimized: unsafe { IsIconic(search.found) != 0 },
+        dpi,
+        dpi_scale: dpi as f32 / 96.0,
         work_left,
         work_top,
         work_right,
