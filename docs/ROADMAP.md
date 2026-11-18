@@ -20,10 +20,11 @@
 - [ ] Validate mixed-DPI behavior on physical Windows displays
 
 ## 0.3 — HUD and customization
-- [ ] Draggable desktop HUD widgets
-- [ ] Persistent JSON profiles
-- [ ] Theme editor, opacity, scale, animation controls
-- [ ] Custom crosshair preview and desktop widgets
+- [x] Draggable desktop HUD preview widgets
+- [x] Persistent local JSON profile with manual save/load and save-on-exit
+- [x] Opacity, accent-glow toggle, and UI scale controls
+- [ ] Animation controls
+- [x] Draggable desktop status/FPS preview and crosshair preview widgets
 
 ## 0.4 — Windows companion features
 - [ ] Instance detection for common launchers
