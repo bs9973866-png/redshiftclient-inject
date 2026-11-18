@@ -60,6 +60,20 @@ public final class ModuleManager {
         ) {});
 
         register(new ClientModule(
+                "keystrokes",
+                "Keystrokes",
+                "Displays live WASD, jump and sneak key states.",
+                ModuleCategory.HUD
+        ) {});
+
+        register(new ClientModule(
+                "armor_status",
+                "Armor Status",
+                "Displays equipped armor and remaining durability.",
+                ModuleCategory.HUD
+        ) {});
+
+        register(new ClientModule(
                 "world_clock",
                 "World Clock",
                 "Displays the current in-game day time.",
