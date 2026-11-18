@@ -5,6 +5,7 @@ import dev.redshift.client.core.ClientModule;
 import dev.redshift.client.core.ModuleCategory;
 import dev.redshift.client.core.ModuleManager;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.Screen;
@@ -21,6 +22,8 @@ public final class ClickGuiScreen extends Screen {
     private boolean settingsOpen;
     private boolean waitingForGuiKey;
     private String waitingForModuleKey;
+    private String searchQuery = "";
+    private boolean searchFocused;
 
     public ClickGuiScreen() {
         super(Component.literal("REDSHIFT CLIENT"));
@@ -90,16 +93,30 @@ public final class ClickGuiScreen extends Screen {
             graphics.drawString(this.font, selectedCategory.title().toUpperCase(), contentX, y + 77, 0xFFFFFFFF);
             graphics.drawString(this.font, "LEFT CLICK  /  TOGGLE     RIGHT CLICK  /  BIND", contentX, y + 94, 0xFF9C899F);
 
-        List<ClientModule> modules = ModuleManager.byCategory(selectedCategory);
-        if (modules.isEmpty()) {
-            graphics.drawString(this.font, "No modules in this category yet.", contentX, y + 137, 0xFF9C899F);
-        }
+            int searchY = y + 108;
+            graphics.fill(contentX, searchY, contentX + 506, searchY + 22, searchFocused ? 0xEE21121F : 0xCC15101C);
+            graphics.fill(contentX, searchY, contentX + 506, searchY + 1, searchFocused ? 0xFFFF4568 : 0x553D2D44);
+            String searchLabel = searchQuery.isEmpty() ? "Search modules..." : searchQuery;
+            graphics.drawString(this.font, searchLabel, contentX + 9, searchY + 7,
+                    searchQuery.isEmpty() ? 0xFF766B7A : 0xFFF8F1F5);
+            if (searchFocused) {
+                int caretX = contentX + 9 + this.font.width(searchQuery);
+                graphics.fill(caretX, searchY + 6, caretX + 1, searchY + 17, 0xFFFF5578);
+            }
 
-        int cardWidth = 245;
-        int cardHeight = 66;
-        int gapX = 12;
-        int gapY = 12;
-        int cardsStartY = y + 124;
+            List<ClientModule> modules = filteredModules();
+            if (modules.isEmpty()) {
+                graphics.drawString(this.font, searchQuery.isEmpty()
+                                ? "No modules in this category yet."
+                                : "No modules match your search.",
+                        contentX, y + 153, 0xFF9C899F);
+            }
+
+            int cardWidth = 245;
+            int cardHeight = 66;
+            int gapX = 12;
+            int gapY = 12;
+            int cardsStartY = y + 140;
 
         for (int index = 0; index < modules.size(); index++) {
             ClientModule module = modules.get(index);
@@ -207,6 +224,19 @@ public final class ClickGuiScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent input) {
+        if (searchFocused) {
+            if (input.key() == GLFW.GLFW_KEY_ESCAPE || input.key() == GLFW.GLFW_KEY_ENTER) {
+                searchFocused = false;
+                return true;
+            }
+            if (input.key() == GLFW.GLFW_KEY_BACKSPACE && !searchQuery.isEmpty()) {
+                int end = searchQuery.offsetByCodePoints(searchQuery.length(), -1);
+                searchQuery = searchQuery.substring(0, end);
+                return true;
+            }
+            return true;
+        }
+
         if (waitingForModuleKey != null) {
             int key = input.key();
             if (key == GLFW.GLFW_KEY_ESCAPE) {
@@ -237,6 +267,20 @@ public final class ClickGuiScreen extends Screen {
             return true;
         }
         return super.keyPressed(input);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent input) {
+        if (!searchFocused) {
+            return super.charTyped(input);
+        }
+
+        String typed = input.codepointAsString();
+        if (typed != null && !typed.isEmpty() && input.isAllowedChatCharacter()
+                && searchQuery.length() < 32) {
+            searchQuery += typed;
+        }
+        return true;
     }
 
     @Override
@@ -275,6 +319,7 @@ public final class ClickGuiScreen extends Screen {
 
         int contentX = x + 180;
         if (settingsOpen) {
+            searchFocused = false;
             int cardRight = x + PANEL_WIDTH - 22;
             int buttonX = cardRight - 146;
             int buttonY = y + 124 + 25;
@@ -283,12 +328,20 @@ public final class ClickGuiScreen extends Screen {
             }
             return true;
         }
+
+        int searchY = y + 108;
+        if (inside(mouseX, mouseY, contentX, searchY, contentX + 506, searchY + 22)) {
+            searchFocused = true;
+            return true;
+        }
+        searchFocused = false;
+
         int cardWidth = 245;
         int cardHeight = 66;
         int gapX = 12;
         int gapY = 12;
-        int cardsStartY = y + 124;
-        List<ClientModule> modules = ModuleManager.byCategory(selectedCategory);
+        int cardsStartY = y + 140;
+        List<ClientModule> modules = filteredModules();
 
         if (click.button() == 1) {
             for (int index = 0; index < modules.size(); index++) {
@@ -319,6 +372,16 @@ public final class ClickGuiScreen extends Screen {
         }
 
         return super.mouseClicked(click, doubled);
+    }
+
+    private List<ClientModule> filteredModules() {
+        String query = searchQuery.trim().toLowerCase(java.util.Locale.ROOT);
+        return ModuleManager.byCategory(selectedCategory).stream()
+                .filter(module -> query.isEmpty()
+                        || module.name().toLowerCase(java.util.Locale.ROOT).contains(query)
+                        || module.description().toLowerCase(java.util.Locale.ROOT).contains(query)
+                        || module.id().toLowerCase(java.util.Locale.ROOT).contains(query))
+                .toList();
     }
 
     private static boolean inside(double mouseX, double mouseY, int left, int top, int right, int bottom) {
