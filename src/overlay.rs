@@ -199,21 +199,28 @@ impl RedshiftOverlay {
             if let Some(game) = self.minecraft_window.as_ref()
                 .filter(|game| game.is_foreground && game.width > 0 && game.height > 0)
             {
-                // Keep the panel on the same monitor as Minecraft and inside
-                // that monitor's usable work area (excluding the taskbar).
-                const PANEL_WIDTH: i32 = 610;
-                const PANEL_HEIGHT: i32 = 460;
+                // Windows APIs return physical pixels under per-monitor DPI awareness.
+                // egui viewport positions are logical points, so convert using the
+                // overlay's current monitor scale before asking winit to move it.
+                let target_scale = (game.dpi_scale * self.ui_scale).max(0.5);
+                let panel_width_px = (610.0 * target_scale).round() as i32;
+                let panel_height_px = (460.0 * target_scale).round() as i32;
+                let margin_px = (24.0 * target_scale).round() as i32;
                 let min_x = game.work_left;
                 let min_y = game.work_top;
-                let max_x = (game.work_right - PANEL_WIDTH).max(min_x);
-                let max_y = (game.work_bottom - PANEL_HEIGHT).max(min_y);
+                let max_x = (game.work_right - panel_width_px).max(min_x);
+                let max_y = (game.work_bottom - panel_height_px).max(min_y);
                 let target = (
-                    (game.left + 24).clamp(min_x, max_x),
-                    (game.top + 24).clamp(min_y, max_y),
+                    (game.left + margin_px).clamp(min_x, max_x),
+                    (game.top + margin_px).clamp(min_y, max_y),
                 );
                 if self.last_follow_position != Some(target) {
+                    let current_scale = (ctx.native_pixels_per_point().unwrap_or(1.0) * self.ui_scale).max(0.5);
                     ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(
-                        egui::pos2(target.0 as f32, target.1 as f32),
+                        egui::pos2(
+                            target.0 as f32 / current_scale,
+                            target.1 as f32 / current_scale,
+                        ),
                     ));
                     self.last_follow_position = Some(target);
                 }
@@ -320,6 +327,7 @@ impl RedshiftOverlay {
                 if let Some(game) = self.minecraft_window.as_ref() {
                     ui.add_space(8.0);
                     ui.label(RichText::new(format!("WINDOW  •  {} × {}", game.width, game.height)).size(10.0).color(MUTED));
+                    ui.label(RichText::new(format!("DISPLAY DPI  •  {}% ({} DPI)", (game.dpi_scale * 100.0).round() as u32, game.dpi)).size(10.0).color(MUTED));
                     ui.label(RichText::new(game.title.chars().take(52).collect::<String>()).size(11.0).color(TEXT));
                 }
                 ui.add_space(14.0);
@@ -403,7 +411,9 @@ impl RedshiftOverlay {
 
 impl eframe::App for RedshiftOverlay {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        ctx.set_pixels_per_point(self.ui_scale);
+        // Preserve the OS-provided per-monitor DPI scale and apply the user's
+        // interface zoom on top of it.
+        ctx.set_zoom_factor(self.ui_scale);
         self.poll(ctx);
 
         // HUD preview widgets are independent of the settings panel. Right Shift
