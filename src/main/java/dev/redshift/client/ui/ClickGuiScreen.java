@@ -206,7 +206,7 @@ public final class ClickGuiScreen extends Screen {
     }
 
     public boolean isCapturingGuiKey() {
-        return waitingForGuiKey || waitingForModuleKey != null;
+        return waitingForGuiKey || waitingForModuleKey != null || searchFocused;
     }
 
     private static String moduleKeyName(ClientModule module) {
@@ -306,6 +306,7 @@ public final class ClickGuiScreen extends Screen {
             if (inside(mouseX, mouseY, x + 12, rowY - 7, x + 160, rowY + 29)) {
                 selectedCategory = category;
                 settingsOpen = false;
+                searchFocused = false;
                 return true;
             }
         }
@@ -313,6 +314,7 @@ public final class ClickGuiScreen extends Screen {
         int settingsRowY = navY + ModuleCategory.values().length * 48;
         if (inside(mouseX, mouseY, x + 12, settingsRowY - 7, x + 160, settingsRowY + 29)) {
             settingsOpen = true;
+            searchFocused = false;
             waitingForGuiKey = false;
             return true;
         }
