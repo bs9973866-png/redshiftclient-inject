@@ -8,6 +8,7 @@ REDSHIFT is a separate desktop application. It does not require Fabric, Forge, N
 
 - Rust desktop application
 - Transparent, borderless, always-on-top window
+- Mouse click-through while the menu is closed, keeping Minecraft interactive underneath
 - Black / Crimson / Liquid Glass visual direction
 - Global Right Shift menu toggle
 - Minecraft window-title detection, bounds, and foreground state
