@@ -12,6 +12,8 @@ const MUTED: Color32 = Color32::from_rgb(168, 151, 171);
 #[derive(Clone, Serialize, Deserialize)]
 struct OverlayProfile {
     opacity: f32,
+    #[serde(default = "default_ui_scale")]
+    ui_scale: f32,
     accent_glow: bool,
     follow_game_window: bool,
     show_fps_widget: bool,
@@ -25,11 +27,13 @@ struct OverlayProfile {
 }
 
 fn default_crosshair_position() -> [f32; 2] { [370.0, 285.0] }
+fn default_ui_scale() -> f32 { 1.0 }
 
 impl Default for OverlayProfile {
     fn default() -> Self {
         Self {
             opacity: 0.94,
+            ui_scale: 1.0,
             accent_glow: true,
             follow_game_window: true,
             show_fps_widget: true,
@@ -65,6 +69,7 @@ pub struct RedshiftOverlay {
     follow_game_window: bool,
     last_follow_position: Option<(i32, i32)>,
     opacity: f32,
+    ui_scale: f32,
     accent_glow: bool,
     show_fps_widget: bool,
     show_status_widget: bool,
@@ -86,10 +91,11 @@ impl RedshiftOverlay {
             follow_game_window: profile.follow_game_window,
             last_follow_position: None,
             opacity: profile.opacity,
+            ui_scale: profile.ui_scale.clamp(0.8, 1.3),
             accent_glow: profile.accent_glow,
             show_fps_widget: profile.show_fps_widget,
             show_status_widget: profile.show_status_widget,
-            show_crosshair_widget: false,
+            show_crosshair_widget: profile.show_crosshair_widget,
             fps_position: egui::pos2(profile.fps_position[0], profile.fps_position[1]),
             status_position: egui::pos2(profile.status_position[0], profile.status_position[1]),
             crosshair_position: egui::pos2(profile.crosshair_position[0], profile.crosshair_position[1]),
@@ -100,6 +106,7 @@ impl RedshiftOverlay {
     fn profile(&self) -> OverlayProfile {
         OverlayProfile {
             opacity: self.opacity,
+            ui_scale: self.ui_scale,
             accent_glow: self.accent_glow,
             follow_game_window: self.follow_game_window,
             show_fps_widget: self.show_fps_widget,
@@ -136,6 +143,7 @@ impl RedshiftOverlay {
 
     fn apply_profile(&mut self, profile: OverlayProfile) {
         self.opacity = profile.opacity.clamp(0.55, 1.0);
+        self.ui_scale = profile.ui_scale.clamp(0.8, 1.3);
         self.accent_glow = profile.accent_glow;
         self.follow_game_window = profile.follow_game_window;
         self.show_fps_widget = profile.show_fps_widget;
@@ -289,6 +297,10 @@ impl RedshiftOverlay {
                 ui.add_space(12.0);
                 ui.label(RichText::new("Panel opacity").color(TEXT));
                 ui.add(egui::Slider::new(&mut self.opacity, 0.55..=1.0));
+                ui.add_space(10.0);
+                ui.label(RichText::new("Interface scale").color(TEXT));
+                ui.add(egui::Slider::new(&mut self.ui_scale, 0.8..=1.3).text("Scale"));
+                ui.label(RichText::new("Applies to the whole overlay window.").size(10.0).color(MUTED));
                 egui::Frame::new()
                     .fill(Color32::from_rgba_unmultiplied(65, 35, 66, (self.opacity * 230.0) as u8))
                     .stroke(Stroke::new(1.0, CRIMSON))
@@ -329,6 +341,7 @@ impl RedshiftOverlay {
 
 impl eframe::App for RedshiftOverlay {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        ctx.set_pixels_per_point(self.ui_scale);
         self.poll(ctx);
         if !self.menu_open {
             egui::CentralPanel::default().frame(egui::Frame::NONE).show(ctx, |ui| {
