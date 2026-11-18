@@ -87,6 +87,7 @@ pub struct RedshiftOverlay {
     show_crosshair_widget: bool,
     widgets_only_with_game: bool,
     auto_hide_menu_when_unfocused: bool,
+    hide_when_game_minimized: bool,
     fps_position: egui::Pos2,
     status_position: egui::Pos2,
     crosshair_position: egui::Pos2,
