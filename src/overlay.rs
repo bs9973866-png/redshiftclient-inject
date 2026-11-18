@@ -184,7 +184,18 @@ impl RedshiftOverlay {
             if let Some(game) = self.minecraft_window.as_ref()
                 .filter(|game| game.is_foreground && game.width > 0 && game.height > 0)
             {
-                let target = (game.left + 24, game.top + 24);
+                // Keep the panel on the same monitor as Minecraft and inside
+                // that monitor's usable work area (excluding the taskbar).
+                const PANEL_WIDTH: i32 = 610;
+                const PANEL_HEIGHT: i32 = 460;
+                let min_x = game.work_left;
+                let min_y = game.work_top;
+                let max_x = (game.work_right - PANEL_WIDTH).max(min_x);
+                let max_y = (game.work_bottom - PANEL_HEIGHT).max(min_y);
+                let target = (
+                    (game.left + 24).clamp(min_x, max_x),
+                    (game.top + 24).clamp(min_y, max_y),
+                );
                 if self.last_follow_position != Some(target) {
                     ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(
                         egui::pos2(target.0 as f32, target.1 as f32),
