@@ -3,6 +3,10 @@ package dev.redshift.client.core;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public abstract class ClientModule {
     private final String id;
     private final String name;
@@ -10,6 +14,7 @@ public abstract class ClientModule {
     private final ModuleCategory category;
     private boolean enabled;
     private int keybind = GLFW.GLFW_KEY_UNKNOWN;
+    private final List<BooleanSetting> booleanSettings = new ArrayList<>();
 
     protected ClientModule(String id, String name, String description, ModuleCategory category) {
         this.id = id;
@@ -44,6 +49,28 @@ public abstract class ClientModule {
 
     public final void setKeybind(int keybind) {
         this.keybind = keybind;
+    }
+
+    protected final BooleanSetting addBooleanSetting(
+            String id,
+            String name,
+            String description,
+            boolean defaultValue
+    ) {
+        BooleanSetting setting = new BooleanSetting(id, name, description, defaultValue);
+        booleanSettings.add(setting);
+        return setting;
+    }
+
+    public final List<BooleanSetting> booleanSettings() {
+        return Collections.unmodifiableList(booleanSettings);
+    }
+
+    public final BooleanSetting booleanSetting(String id) {
+        return booleanSettings.stream()
+                .filter(setting -> setting.id().equals(id))
+                .findFirst()
+                .orElse(null);
     }
 
     public final void toggle() {
