@@ -6,10 +6,11 @@
 - [x] Right Shift global hotkey
 - [x] Basic Minecraft window-title detection
 - [x] Black / Crimson Liquid Glass UI shell
-- [ ] Verify Windows release build in CI
+- [x] Verify Windows release build in CI
 
 ## 0.2 — Overlay behavior
-- [ ] Track Minecraft window position and size
+- [x] Track Minecraft window position and size
+- [x] Optional follow mode while Minecraft is foreground
 - [ ] Show overlay only while a Minecraft window is active (user setting)
 - [ ] Reliable show / hide and focus behavior
 - [ ] Multi-monitor and DPI scaling support
