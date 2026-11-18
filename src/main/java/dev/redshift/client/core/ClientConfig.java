@@ -80,9 +80,36 @@ public final class ClientConfig {
         return result;
     }
 
+    public static Map<String, Map<String, Boolean>> loadModuleSettings() {
+        Map<String, Map<String, Boolean>> result = new LinkedHashMap<>();
+        JsonObject root = readRoot();
+        if (!root.has("moduleSettings") || !root.get("moduleSettings").isJsonObject()) {
+            return result;
+        }
+
+        JsonObject modules = root.getAsJsonObject("moduleSettings");
+        for (Map.Entry<String, JsonElement> moduleEntry : modules.entrySet()) {
+            if (!moduleEntry.getValue().isJsonObject()) {
+                continue;
+            }
+
+            Map<String, Boolean> settings = new LinkedHashMap<>();
+            for (Map.Entry<String, JsonElement> settingEntry
+                    : moduleEntry.getValue().getAsJsonObject().entrySet()) {
+                JsonElement value = settingEntry.getValue();
+                if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) {
+                    settings.put(settingEntry.getKey(), value.getAsBoolean());
+                }
+            }
+            result.put(moduleEntry.getKey(), settings);
+        }
+        return result;
+    }
+
     public static void save(
             Map<String, Boolean> enabledModules,
-            Map<String, Integer> moduleKeybinds
+            Map<String, Integer> moduleKeybinds,
+            Map<String, Map<String, Boolean>> moduleSettings
     ) {
         JsonObject root = readRoot();
         JsonObject modules = new JsonObject();
@@ -92,6 +119,14 @@ public final class ClientConfig {
         JsonObject keybinds = new JsonObject();
         moduleKeybinds.forEach(keybinds::addProperty);
         root.add("moduleKeybinds", keybinds);
+
+        JsonObject settingsRoot = new JsonObject();
+        moduleSettings.forEach((moduleId, settings) -> {
+            JsonObject settingsObject = new JsonObject();
+            settings.forEach(settingsObject::addProperty);
+            settingsRoot.add(moduleId, settingsObject);
+        });
+        root.add("moduleSettings", settingsRoot);
         writeRoot(root);
     }
 
