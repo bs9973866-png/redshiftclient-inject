@@ -28,6 +28,8 @@ struct OverlayProfile {
     widgets_only_with_game: bool,
     #[serde(default)]
     auto_hide_menu_when_unfocused: bool,
+    #[serde(default)]
+    hide_when_game_minimized: bool,
 }
 
 fn default_crosshair_position() -> [f32; 2] { [370.0, 285.0] }
@@ -48,6 +50,7 @@ impl Default for OverlayProfile {
             show_crosshair_widget: false,
             widgets_only_with_game: false,
             auto_hide_menu_when_unfocused: false,
+            hide_when_game_minimized: false,
         }
     }
 }
@@ -75,6 +78,7 @@ pub struct RedshiftOverlay {
     follow_game_window: bool,
     last_follow_position: Option<(i32, i32)>,
     last_game_foreground: bool,
+    viewport_visible: bool,
     opacity: f32,
     ui_scale: f32,
     accent_glow: bool,
@@ -100,6 +104,7 @@ impl RedshiftOverlay {
             follow_game_window: profile.follow_game_window,
             last_follow_position: None,
             last_game_foreground: false,
+            viewport_visible: true,
             opacity: profile.opacity,
             ui_scale: profile.ui_scale.clamp(0.8, 1.3),
             accent_glow: profile.accent_glow,
@@ -108,6 +113,7 @@ impl RedshiftOverlay {
             show_crosshair_widget: profile.show_crosshair_widget,
             widgets_only_with_game: profile.widgets_only_with_game,
             auto_hide_menu_when_unfocused: profile.auto_hide_menu_when_unfocused,
+            hide_when_game_minimized: profile.hide_when_game_minimized,
             fps_position: egui::pos2(profile.fps_position[0], profile.fps_position[1]),
             status_position: egui::pos2(profile.status_position[0], profile.status_position[1]),
             crosshair_position: egui::pos2(profile.crosshair_position[0], profile.crosshair_position[1]),
@@ -129,6 +135,7 @@ impl RedshiftOverlay {
             show_crosshair_widget: self.show_crosshair_widget,
             widgets_only_with_game: self.widgets_only_with_game,
             auto_hide_menu_when_unfocused: self.auto_hide_menu_when_unfocused,
+            hide_when_game_minimized: self.hide_when_game_minimized,
         }
     }
 
@@ -168,6 +175,7 @@ impl RedshiftOverlay {
         self.show_crosshair_widget = profile.show_crosshair_widget;
         self.widgets_only_with_game = profile.widgets_only_with_game;
         self.auto_hide_menu_when_unfocused = profile.auto_hide_menu_when_unfocused;
+        self.hide_when_game_minimized = profile.hide_when_game_minimized;
     }
 
     fn poll(&mut self, ctx: &egui::Context) {
@@ -175,6 +183,12 @@ impl RedshiftOverlay {
             self.menu_open = !self.menu_open;
         }
         self.minecraft_window = platform::find_minecraft_window();
+        let should_show_viewport = !self.hide_when_game_minimized
+            || !self.minecraft_window.as_ref().is_some_and(|game| game.is_minimized);
+        if should_show_viewport != self.viewport_visible {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(should_show_viewport));
+            self.viewport_visible = should_show_viewport;
+        }
         let game_is_active = self.minecraft_window.as_ref().is_some_and(|game| game.is_foreground);
         if self.auto_hide_menu_when_unfocused && self.last_game_foreground && !game_is_active {
             self.menu_open = false;
@@ -375,6 +389,9 @@ impl RedshiftOverlay {
                 ui.add_space(8.0);
                 ui.checkbox(&mut self.auto_hide_menu_when_unfocused, "Auto-hide menu when Minecraft loses focus");
                 ui.label(RichText::new("Right Shift can still reopen the menu at any time.").size(10.0).color(MUTED));
+                ui.add_space(8.0);
+                ui.checkbox(&mut self.hide_when_game_minimized, "Hide overlay when Minecraft is minimized");
+                ui.label(RichText::new("The whole transparent overlay window is hidden until Minecraft is restored.").size(10.0).color(MUTED));
                 ui.add_space(10.0);
                 ui.label(RichText::new("Transparent always-on-top window").color(MUTED));
                 ui.label(RichText::new("Visible to normal screen capture").color(MUTED));
